@@ -158,6 +158,12 @@ class FastVK(Router):
             bot.run_polling()
         ```
         """
+        if not logging.root.handlers:
+            logging.basicConfig(
+                level=logging.INFO,
+                format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
+                datefmt="%H:%M:%S",
+            )
         try:
             asyncio.run(self._run_polling())
         except KeyboardInterrupt:
