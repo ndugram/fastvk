@@ -31,17 +31,21 @@
 
 ---
 
-FastVK is a modern **async VK bot framework** for Python. It brings a decorator-based handler API — similar to FastAPI and aiogram, but for VK — with FSM, middleware, filters, and clean dependency injection out of the box.
+FastVK is a modern **async VK bot framework** for Python. It brings a decorator-based handler API — similar to FastAPI and aiogram, but for VK — with FSM, middleware, filters, keyboard builder, and a real-time dashboard out of the box.
 
 Key features:
 
 - **Familiar** — if you know FastAPI or aiogram, you already know FastVK. Same patterns, same ergonomics.
 - **Async** — built on <a href="https://docs.aiohttp.org/" target="_blank">aiohttp</a> with full async/await support from top to bottom.
-- **FSM** — built-in Finite State Machine with `State`, `StatesGroup`, and pluggable storage backends.
+- **FSM** — built-in Finite State Machine with `State`, `StatesGroup`, and pluggable storage: Memory, Redis, SQLite.
 - **Filters** — `Command`, `Text`, `StateFilter`, `FromUser`, `IsChat` and custom filters via any callable.
-- **Injection** — handler parameters injected by name: `message`, `state`, `api`, `update` — no manual wiring.
-- **Routers** — split handlers across multiple `Router` instances, include them into the main bot.
+- **Keyboard** — fluent keyboard builder with text, callback, link, location, and VK Pay buttons.
+- **Injection** — handler parameters injected by type: `message`, `state`, `bot`, `update` — no manual wiring.
+- **Routers** — split handlers across multiple `Router` instances and include them into the main bot.
 - **Middleware** — intercept every update before and after handlers with `BaseMiddleware`.
+- **Webhook** — built-in Callback API server via `run_webhook()`, no extra setup needed.
+- **Dashboard** — real-time monitoring UI with live stats, activity feed, and handler search.
+- **Logging** — colored, structured terminal output with per-logger colors and event highlighting.
 - **Typed** — full type annotations throughout; works great with mypy and pyright.
 
 ## Requirements
@@ -50,8 +54,8 @@ Python 3.10+
 
 FastVK depends on:
 
-- <a href="https://docs.aiohttp.org/" target="_blank"><code>aiohttp</code></a> — async HTTP transport for Long Poll and VK API calls.
-- <a href="https://github.com/annotated-doc/annotated-doc" target="_blank"><code>annotated-doc</code></a> — `Doc()` annotations for rich parameter documentation.
+- <a href="https://docs.aiohttp.org/" target="_blank"><code>aiohttp</code></a> — async HTTP transport for Long Poll, Webhook, and VK API calls.
+- <a href="https://docs.pydantic.dev/" target="_blank"><code>pydantic</code></a> — typed data models for VK event objects.
 
 ## Installation
 
@@ -77,7 +81,7 @@ bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
 
 @bot.message(Command("start"))
 async def start(message: Message) -> None:
-    await message.answer("Привет! Я FastVK бот 🤖")
+    await message.answer("Привет! Я FastVK бот.")
 
 
 if __name__ == "__main__":
@@ -92,11 +96,11 @@ $ python main.py
 
 ### Check it
 
-You will see output like:
+You will see colored output like:
 
 ```
-INFO  fastvk  FastVK started (group_id=123456789)
-INFO  fastvk  Polling started
+10:35:42  INFO     fastvk                  FastVK started (group_id=123456789)
+10:35:44  INFO     fastvk                  ← message_new  →  start()  [Иван  id=123]
 ```
 
 Send `/start` to your bot — it replies instantly.
@@ -117,35 +121,142 @@ from fastvk.types import Message
 bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
 
 
-class RegistrationForm(StatesGroup):
+class Form(StatesGroup):
     waiting_name = State()
     waiting_age  = State()
 
 
 @bot.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext) -> None:
-    await state.set_state(RegistrationForm.waiting_name)
+    await state.set_state(Form.waiting_name)
     await message.answer("Как тебя зовут?")
 
 
-@bot.message(StateFilter(RegistrationForm.waiting_name))
+@bot.message(StateFilter(Form.waiting_name))
 async def got_name(message: Message, state: FSMContext) -> None:
     await state.update_data(name=message.text)
-    await state.set_state(RegistrationForm.waiting_age)
+    await state.set_state(Form.waiting_age)
     await message.answer(f"Отлично, {message.text}! Сколько тебе лет?")
 
 
-@bot.message(StateFilter(RegistrationForm.waiting_age))
+@bot.message(StateFilter(Form.waiting_age))
 async def got_age(message: Message, state: FSMContext) -> None:
     data = await state.update_data(age=message.text)
     await state.clear()
-    await message.answer(
-        f"Готово!\nИмя: {data['name']}\nВозраст: {data['age']}"
-    )
+    await message.answer(f"Готово!\nИмя: {data['name']}\nВозраст: {data['age']}")
 
 
 if __name__ == "__main__":
     bot.run_polling()
+```
+
+</details>
+
+<details markdown="1">
+<summary>With persistent FSM storage (SQLite)...</summary>
+
+FSM state survives restarts — no Redis required:
+
+```python
+from fastvk import FastVK
+from fastvk.fsm import SQLiteStorage
+
+bot = FastVK(
+    token="vk1.a.YOUR_TOKEN",
+    group_id=123456789,
+    storage=SQLiteStorage("bot.db"),
+)
+```
+
+Install the optional dependency first:
+
+```console
+$ pip install fastvk[sqlite]
+```
+
+For Redis:
+
+```python
+from fastvk.fsm import RedisStorage
+
+bot = FastVK(..., storage=RedisStorage("redis://localhost:6379/0"))
+```
+
+```console
+$ pip install fastvk[redis]
+```
+
+</details>
+
+<details markdown="1">
+<summary>With keyboard buttons...</summary>
+
+Build keyboards with a fluent API:
+
+```python
+from fastvk import FastVK
+from fastvk.filters import Command
+from fastvk.keyboard import Button, Keyboard
+from fastvk.enums import Color
+from fastvk.types import Message
+
+bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+
+
+@bot.message(Command("menu"))
+async def menu(message: Message) -> None:
+    kb = (
+        Keyboard(one_time=True)
+        .row(
+            Button.text("Да",  color=Color.POSITIVE),
+            Button.text("Нет", color=Color.NEGATIVE),
+        )
+        .row(Button.text("Отмена"))
+    )
+    await message.answer("Выберите:", keyboard=kb)
+
+
+@bot.message(Command("pay"))
+async def pay(message: Message) -> None:
+    kb = (
+        Keyboard(inline=True)
+        .row(Button.vkpay(action="pay-to-group", group_id=123456789, amount=100, description="Донат"))
+    )
+    await message.answer("Поддержать проект:", keyboard=kb)
+```
+
+</details>
+
+<details markdown="1">
+<summary>With inline buttons (callback)...</summary>
+
+Handle button clicks from inline keyboards:
+
+```python
+from fastvk import FastVK
+from fastvk.filters import Command
+from fastvk.keyboard import Button, Keyboard
+from fastvk.types import CallbackQuery, Message
+
+bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+
+
+@bot.message(Command("vote"))
+async def vote(message: Message) -> None:
+    kb = (
+        Keyboard(inline=True)
+        .row(
+            Button.callback("👍 За",    payload={"v": "yes"}),
+            Button.callback("👎 Против", payload={"v": "no"}),
+        )
+    )
+    await message.answer("Голосование:", keyboard=kb)
+
+
+@bot.callback()
+async def on_vote(cb: CallbackQuery) -> None:
+    choice = cb.payload.get("v")
+    await cb.answer(f"Вы проголосовали: {'за' if choice == 'yes' else 'против'}")
 ```
 
 </details>
@@ -156,25 +267,31 @@ if __name__ == "__main__":
 Split handlers into separate modules and include them into the bot:
 
 ```python
-from fastvk import FastVK, Router
+# shop.py
+from fastvk import Router
 from fastvk.filters import Command, Text
 from fastvk.types import Message
 
-shop_router = Router()
+router = Router()
 
 
-@shop_router.message(Command("catalog"))
+@router.message(Command("catalog"))
 async def catalog(message: Message) -> None:
-    await message.answer("📦 Наш каталог: ...")
+    await message.answer("Наш каталог: ...")
 
 
-@shop_router.message(Text("цена", contains=True, ignore_case=True))
+@router.message(Text("цена", contains=True, ignore_case=True))
 async def price_mention(message: Message) -> None:
     await message.answer("Цены начинаются от 99₽")
+```
 
+```python
+# main.py
+from fastvk import FastVK
+from shop import router
 
 bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
-bot.include_router(shop_router)
+bot.include_router(router)
 
 if __name__ == "__main__":
     bot.run_polling()
@@ -204,9 +321,9 @@ class LoggingMiddleware(BaseMiddleware):
         event: Any,
         data: dict,
     ) -> Any:
-        print(f"→ incoming: {type(event).__name__}")
+        print(f"incoming: {type(event).__name__}")
         result = await handler(event, data)
-        print(f"← handled")
+        print("handled")
         return result
 
 
@@ -215,15 +332,71 @@ bot = FastVK(
     group_id=123456789,
     middleware=[LoggingMiddleware()],
 )
+```
+
+</details>
+
+<details markdown="1">
+<summary>With error handlers...</summary>
+
+Catch exceptions raised inside handlers — by type, with full context injection:
+
+```python
+from fastvk import FastVK
+from fastvk.exceptions import VKAPIError
+from fastvk.filters import Command
+from fastvk.types import Message
+
+bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
 
 
-@bot.message(Command("ping"))
-async def ping(message: Message) -> None:
-    await message.answer("pong")
+@bot.message(Command("risky"))
+async def risky(message: Message) -> None:
+    raise ValueError("что-то пошло не так")
+
+
+@bot.exception_handler(VKAPIError)
+async def on_vk_error(error: VKAPIError, message: Message) -> None:
+    await message.answer("VK API недоступен, попробуй позже.")
+
+
+@bot.exception_handler()
+async def on_any_error(error: Exception, message: Message) -> None:
+    await message.answer(f"Ошибка: {error}")
 
 
 if __name__ == "__main__":
     bot.run_polling()
+```
+
+</details>
+
+<details markdown="1">
+<summary>With webhook...</summary>
+
+Receive updates via VK Callback API instead of Long Poll:
+
+```python
+from fastvk import FastVK
+from fastvk.filters import Command
+from fastvk.types import Message
+
+bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+
+
+@bot.message(Command("start"))
+async def start(message: Message) -> None:
+    await message.answer("Привет через webhook!")
+
+
+if __name__ == "__main__":
+    bot.run_webhook(
+        confirmation_token="abc123def",  # from VK group settings
+        host="0.0.0.0",
+        port=8080,
+        path="/vk",
+        secret="my_secret",             # optional
+    )
 ```
 
 </details>
@@ -239,7 +412,6 @@ from fastvk.filters import Command, FromUser, IsChat, Text
 from fastvk.types import Message
 
 ADMIN_ID = 123456789
-
 bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=987654321)
 
 
@@ -260,10 +432,6 @@ def is_long_message(message: Message, data: dict) -> bool:
 @bot.message(is_long_message)
 async def long_message(message: Message) -> None:
     await message.answer("Это очень длинное сообщение!")
-
-
-if __name__ == "__main__":
-    bot.run_polling()
 ```
 
 </details>
@@ -271,11 +439,10 @@ if __name__ == "__main__":
 <details markdown="1">
 <summary>With raw VK API calls...</summary>
 
-Access the full VK API via the injected `api` parameter:
+Access the full VK API via the injected `bot` parameter:
 
 ```python
-from fastvk import FastVK
-from fastvk import Bot
+from fastvk import Bot, FastVK
 from fastvk.filters import Command
 from fastvk.types import Message
 
@@ -291,12 +458,8 @@ async def cmd_me(message: Message, bot: Bot) -> None:
 
 @bot.message(Command("members"))
 async def cmd_members(message: Message, bot: Bot) -> None:
-    data = await bot.groups.getMembers(group_id=app.group_id, count=1)
-    await message.answer(f"Участников в группе: {data['count']}")
-
-
-if __name__ == "__main__":
-    bot.run_polling()
+    data = await bot.groups.getMembers(group_id=123456789, count=1)
+    await message.answer(f"Участников: {data['count']}")
 ```
 
 </details>
@@ -307,8 +470,7 @@ if __name__ == "__main__":
 Handle any VK event type — not just messages:
 
 ```python
-from fastvk import FastVK
-from fastvk import Bot
+from fastvk import Bot, FastVK
 from fastvk.types import Update
 
 bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
@@ -317,11 +479,7 @@ bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
 @bot.group_join()
 async def on_join(event: dict, bot: Bot) -> None:
     user_id = event.get("user_id")
-    await api.messages.send(
-        peer_id=user_id,
-        message="Добро пожаловать в группу!",
-        random_id=0,
-    )
+    await bot.messages.send(peer_id=user_id, message="Добро пожаловать!", random_id=0)
 
 
 @bot.wall_post_new()
@@ -332,24 +490,49 @@ async def on_new_post(event: dict) -> None:
 @bot.on("photo_new")
 async def on_photo(update: Update) -> None:
     print(f"Новое фото: {update.object}")
-
-
-if __name__ == "__main__":
-    bot.run_polling()
 ```
 
 </details>
 
+## Dashboard
+
+Enable the real-time monitoring dashboard by passing `dashboard=True`:
+
+```python
+bot = FastVK(
+    token="vk1.a.YOUR_TOKEN",
+    group_id=123456789,
+    dashboard=True,
+    dashboard_host="127.0.0.1",
+    dashboard_port=8080,
+)
+```
+
+Open <a href="http://127.0.0.1:8080" target="_blank">http://127.0.0.1:8080</a> in your browser.
+
+<img src="docs/dashboard-dark.png">
+
+<img src="docs/dashboard-light.png">
+
+The dashboard shows:
+
+- **Overview** — total updates, handled, errors, uptime, sparkline, updates/min, event distribution
+- **Handlers** — registered handlers with filters, searchable
+- **Updates** — live event type breakdown with percentages
+- **Activity** — real-time event feed with timestamps, last 200 events
+
 ## Dependency injection
 
-Handler parameters are injected **by type** — declare what you need, framework provides it. No manual wiring:
+Handler parameters are injected **by type** — declare what you need, the framework provides it:
 
 | Type | What you get |
 |---|---|
-| `Message` | Parsed incoming message (for `message_new` events) |
-| `FSMContext` | FSM context for current user |
-| `Bot` | VK Bot API client |
+| `Message` | Parsed incoming message (`message_new` events) |
+| `CallbackQuery` | Inline button click payload (`message_event` events) |
+| `FSMContext` | FSM state accessor for the current user |
+| `Bot` | VK API client |
 | `Update` | Full raw update object |
+| `BackgroundTasks` | Fire-and-forget background tasks |
 
 ```python
 @router.message()
@@ -359,6 +542,18 @@ async def handler(
     bot: Bot,
 ) -> None:
     ...
+```
+
+## Optional dependencies
+
+| Extra | Installs | Use |
+|---|---|---|
+| `fastvk[sqlite]` | `aiosqlite` | `SQLiteStorage` — persistent FSM without Redis |
+| `fastvk[redis]` | `redis` | `RedisStorage` — Redis-backed FSM storage |
+
+```console
+$ pip install fastvk[sqlite]
+$ pip install fastvk[redis]
 ```
 
 ## Contributing
