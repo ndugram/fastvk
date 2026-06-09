@@ -56,18 +56,18 @@ class Message(BaseModel):
         *,
         keyboard: Keyboard | str | None = None,
         parse_mode: ParseMode | str | None = None,
-        **kwargs: Any,
-    ) -> Any:
+        dont_parse_links: bool = False,
+        disable_mentions: bool = False,
+    ) -> int:
         assert self._bot is not None
-        if keyboard is not None:
-            kwargs["keyboard"] = str(keyboard)
-        if parse_mode is not None:
-            kwargs["content_source"] = str(parse_mode)
         return await self._bot.messages.send(
             peer_id=self.peer_id,
             message=text,
             random_id=random.randint(0, 2**31),
-            **kwargs,
+            keyboard=str(keyboard) if keyboard is not None else None,
+            content_source=str(parse_mode) if parse_mode is not None else None,
+            dont_parse_links=int(dont_parse_links) if dont_parse_links else None,
+            disable_mentions=int(disable_mentions) if disable_mentions else None,
         )
 
     async def reply(
@@ -75,17 +75,18 @@ class Message(BaseModel):
         text: str,
         *,
         keyboard: Keyboard | str | None = None,
-        **kwargs: Any,
-    ) -> Any:
+        dont_parse_links: bool = False,
+        disable_mentions: bool = False,
+    ) -> int:
         assert self._bot is not None
-        if keyboard is not None:
-            kwargs["keyboard"] = str(keyboard)
         return await self._bot.messages.send(
             peer_id=self.peer_id,
             message=text,
             reply_to=self.id,
             random_id=random.randint(0, 2**31),
-            **kwargs,
+            keyboard=str(keyboard) if keyboard is not None else None,
+            dont_parse_links=int(dont_parse_links) if dont_parse_links else None,
+            disable_mentions=int(disable_mentions) if disable_mentions else None,
         )
 
     async def answer_photo(
@@ -94,20 +95,19 @@ class Message(BaseModel):
         caption: str = "",
         *,
         keyboard: Keyboard | str | None = None,
-        **kwargs: Any,
-    ) -> Any:
-        """Send a photo to the same conversation.
-
-        ``attachment`` — VK attachment string, e.g. ``"photo-1_2"``."""
+        dont_parse_links: bool = False,
+        disable_mentions: bool = False,
+    ) -> int:
+        """Send a photo. ``attachment`` — VK attachment string, e.g. ``"photo-1_2"``."""
         assert self._bot is not None
-        if keyboard is not None:
-            kwargs["keyboard"] = str(keyboard)
         return await self._bot.messages.send(
             peer_id=self.peer_id,
             message=caption,
             attachment=attachment,
             random_id=random.randint(0, 2**31),
-            **kwargs,
+            keyboard=str(keyboard) if keyboard is not None else None,
+            dont_parse_links=int(dont_parse_links) if dont_parse_links else None,
+            disable_mentions=int(disable_mentions) if disable_mentions else None,
         )
 
     async def answer_doc(
@@ -116,20 +116,19 @@ class Message(BaseModel):
         caption: str = "",
         *,
         keyboard: Keyboard | str | None = None,
-        **kwargs: Any,
-    ) -> Any:
-        """Send a document to the same conversation.
-
-        ``attachment`` — VK attachment string, e.g. ``"doc-1_2"``."""
+        dont_parse_links: bool = False,
+        disable_mentions: bool = False,
+    ) -> int:
+        """Send a document. ``attachment`` — VK attachment string, e.g. ``"doc-1_2"``."""
         assert self._bot is not None
-        if keyboard is not None:
-            kwargs["keyboard"] = str(keyboard)
         return await self._bot.messages.send(
             peer_id=self.peer_id,
             message=caption,
             attachment=attachment,
             random_id=random.randint(0, 2**31),
-            **kwargs,
+            keyboard=str(keyboard) if keyboard is not None else None,
+            dont_parse_links=int(dont_parse_links) if dont_parse_links else None,
+            disable_mentions=int(disable_mentions) if disable_mentions else None,
         )
 
     async def answer_video(
@@ -138,43 +137,40 @@ class Message(BaseModel):
         caption: str = "",
         *,
         keyboard: Keyboard | str | None = None,
-        **kwargs: Any,
-    ) -> Any:
-        """Send a video to the same conversation.
-
-        ``attachment`` — VK attachment string, e.g. ``"video-1_2"``."""
+        dont_parse_links: bool = False,
+        disable_mentions: bool = False,
+    ) -> int:
+        """Send a video. ``attachment`` — VK attachment string, e.g. ``"video-1_2"``."""
         assert self._bot is not None
-        if keyboard is not None:
-            kwargs["keyboard"] = str(keyboard)
         return await self._bot.messages.send(
             peer_id=self.peer_id,
             message=caption,
             attachment=attachment,
             random_id=random.randint(0, 2**31),
-            **kwargs,
+            keyboard=str(keyboard) if keyboard is not None else None,
+            dont_parse_links=int(dont_parse_links) if dont_parse_links else None,
+            disable_mentions=int(disable_mentions) if disable_mentions else None,
         )
 
-    async def answer_sticker(self, sticker_id: int, **kwargs: Any) -> Any:
-        """Send a sticker to the same conversation."""
+    async def answer_sticker(self, sticker_id: int) -> int:
+        """Send a sticker."""
         assert self._bot is not None
         return await self._bot.messages.send(
             peer_id=self.peer_id,
             sticker_id=sticker_id,
             random_id=random.randint(0, 2**31),
-            **kwargs,
         )
 
-    async def forward(self, peer_id: int | None = None, **kwargs: Any) -> Any:
+    async def forward(self, peer_id: int | None = None) -> int:
         """Forward this message to *peer_id* (defaults to same conversation)."""
         assert self._bot is not None
         return await self._bot.messages.send(
             peer_id=peer_id if peer_id is not None else self.peer_id,
             forward_messages=self.id,
             random_id=random.randint(0, 2**31),
-            **kwargs,
         )
 
-    async def delete(self, *, delete_for_all: bool = False) -> Any:
+    async def delete(self, *, delete_for_all: bool = False) -> int:
         assert self._bot is not None
         return await self._bot.messages.delete(
             message_ids=self.id,
