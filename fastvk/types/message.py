@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 if TYPE_CHECKING:
     from ..api.client import Bot
     from ..keyboard import Keyboard
+    from .user import User
 
 
 class Message(BaseModel):
@@ -25,6 +26,11 @@ class Message(BaseModel):
     raw: dict[str, Any] = Field(default_factory=dict)
 
     _bot: Bot | None = PrivateAttr(default=None)
+    _from_user: User | None = PrivateAttr(default=None)
+
+    @property
+    def from_user(self) -> User | None:
+        return self._from_user
 
     @classmethod
     def from_dict(cls, data: dict[str, Any], bot: Bot) -> Message:
