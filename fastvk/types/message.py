@@ -88,6 +88,92 @@ class Message(BaseModel):
             **kwargs,
         )
 
+    async def answer_photo(
+        self,
+        attachment: str,
+        caption: str = "",
+        *,
+        keyboard: Keyboard | str | None = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Send a photo to the same conversation.
+
+        ``attachment`` — VK attachment string, e.g. ``"photo-1_2"``."""
+        assert self._bot is not None
+        if keyboard is not None:
+            kwargs["keyboard"] = str(keyboard)
+        return await self._bot.messages.send(
+            peer_id=self.peer_id,
+            message=caption,
+            attachment=attachment,
+            random_id=random.randint(0, 2**31),
+            **kwargs,
+        )
+
+    async def answer_doc(
+        self,
+        attachment: str,
+        caption: str = "",
+        *,
+        keyboard: Keyboard | str | None = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Send a document to the same conversation.
+
+        ``attachment`` — VK attachment string, e.g. ``"doc-1_2"``."""
+        assert self._bot is not None
+        if keyboard is not None:
+            kwargs["keyboard"] = str(keyboard)
+        return await self._bot.messages.send(
+            peer_id=self.peer_id,
+            message=caption,
+            attachment=attachment,
+            random_id=random.randint(0, 2**31),
+            **kwargs,
+        )
+
+    async def answer_video(
+        self,
+        attachment: str,
+        caption: str = "",
+        *,
+        keyboard: Keyboard | str | None = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Send a video to the same conversation.
+
+        ``attachment`` — VK attachment string, e.g. ``"video-1_2"``."""
+        assert self._bot is not None
+        if keyboard is not None:
+            kwargs["keyboard"] = str(keyboard)
+        return await self._bot.messages.send(
+            peer_id=self.peer_id,
+            message=caption,
+            attachment=attachment,
+            random_id=random.randint(0, 2**31),
+            **kwargs,
+        )
+
+    async def answer_sticker(self, sticker_id: int, **kwargs: Any) -> Any:
+        """Send a sticker to the same conversation."""
+        assert self._bot is not None
+        return await self._bot.messages.send(
+            peer_id=self.peer_id,
+            sticker_id=sticker_id,
+            random_id=random.randint(0, 2**31),
+            **kwargs,
+        )
+
+    async def forward(self, peer_id: int | None = None, **kwargs: Any) -> Any:
+        """Forward this message to *peer_id* (defaults to same conversation)."""
+        assert self._bot is not None
+        return await self._bot.messages.send(
+            peer_id=peer_id if peer_id is not None else self.peer_id,
+            forward_messages=self.id,
+            random_id=random.randint(0, 2**31),
+            **kwargs,
+        )
+
     async def delete(self, *, delete_for_all: bool = False) -> Any:
         assert self._bot is not None
         return await self._bot.messages.delete(
