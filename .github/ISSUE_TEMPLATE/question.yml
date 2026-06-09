@@ -1,0 +1,40 @@
+name: ❓ Question
+description: Ask a question about FastVK
+title: "[Question] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before asking — check the [README](https://github.com/ndugram/fastvk#readme) and [examples](https://github.com/ndugram/fastvk/tree/master/examples).
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      placeholder: "How do I...?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      placeholder: |
+        ```python
+        # What you're trying to do
+        ```
+
+  - type: input
+    id: version
+    attributes:
+      label: FastVK Version
+      placeholder: "e.g., 0.0.1"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked the README and examples
+        - label: I searched existing issues
