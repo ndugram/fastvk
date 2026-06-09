@@ -76,3 +76,28 @@ class MessagesGetConversations(VKMethod[dict]):
     count: int = 20
     filter: str = "all"
     extended: int = 0
+
+
+class MessagesEdit(VKMethod[int]):
+    """Edit a previously sent message. Returns 1 on success."""
+
+    __returning__ = int
+    __api_method__ = "messages.edit"
+
+    peer_id: int
+    message_id: int
+    message: str
+    attachment: str | None = None
+    keyboard: str | None = None
+    dont_parse_links: int | None = None
+    disable_mentions: int | None = None
+
+
+class MessagesSetActivity(VKMethod[int]):
+    """Send a chat action indicator (typing, recording audio, etc.)."""
+
+    __returning__ = int
+    __api_method__ = "messages.setActivity"
+
+    peer_id: int
+    type: str = "typing"
