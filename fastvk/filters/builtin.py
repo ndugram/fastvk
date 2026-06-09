@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from ..fsm.context import FSMContext
     from ..fsm.state import State
     from ..types.message import Message
 
