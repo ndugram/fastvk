@@ -11,6 +11,12 @@
 <a href="https://pypi.org/project/fastvk" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/fastvk.svg?color=%234C75A3" alt="Supported Python versions">
 </a>
+<a href="https://pypi.org/project/fastvk" target="_blank">
+    <img src="https://img.shields.io/pypi/dm/fastvk?color=%234C75A3&label=downloads" alt="Monthly downloads">
+</a>
+<a href="https://pepy.tech/projects/fastvk" target="_blank">
+    <img src="https://img.shields.io/pepy/dt/fastvk?color=%234C75A3&label=total%20downloads" alt="Total downloads">
+</a>
 <a href="https://github.com/ndugram/fastvk" target="_blank">
     <img src="https://img.shields.io/github/stars/ndugram/fastvk?style=social" alt="GitHub Stars">
 </a>
