@@ -23,7 +23,45 @@ Button.link("GitHub", url="https://github.com")
 
 # Кнопка геолокации
 Button.location()
+
+# Кнопка VK Pay
+Button.vkpay(action="pay-to-group", group_id=123, amount=100, description="Донат")
+Button.vkpay(action="transfer-to-group", group_id=123, aid=1)
+Button.vkpay(action="transfer-to-user", user_id=456, aid=1)
 ```
+
+### Кнопка VK Pay
+
+`Button.vkpay` собирает внутренний `hash` из именованных параметров — вручную строить строку не нужно.
+
+```python
+# Оплата в группу (самый частый случай)
+Button.vkpay(
+    action="pay-to-group",
+    group_id=123456,
+    amount=100,           # рублей
+    description="Донат",
+)
+
+# Перевод в группу
+Button.vkpay(action="transfer-to-group", group_id=123456, aid=1)
+
+# Перевод пользователю
+Button.vkpay(action="transfer-to-user", user_id=654321, aid=1)
+```
+
+| Параметр | Нужен для | Описание |
+|---|---|---|
+| `action` | все | `"pay-to-group"` / `"transfer-to-group"` / `"transfer-to-user"` |
+| `group_id` | групповые действия | ID целевой группы |
+| `user_id` | `transfer-to-user` | ID пользователя |
+| `amount` | `pay-to-group` | Сумма в рублях |
+| `description` | `pay-to-group` | Описание платежа |
+| `merchant_id` | опционально | Идентификатор мерчанта |
+| `aid` | переводы | Дополнительный ID |
+
+!!! note
+    Кнопки VK Pay работают только на **inline** клавиатурах (`Keyboard(inline=True)`).
 
 ### Цвета кнопок
 
