@@ -1,6 +1,6 @@
 __title__ = "fastvk"
 __description__ = "Async VK bot framework"
-__version__ = "0.0.12"
+__version__ = "0.0.13"
 __author__ = "NEFORCEO"
 __license__ = "MIT"
 
