@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, get_type_hints
 
 from .filters.builtin import _normalize_filter
+from .types.callback import CallbackQuery
 from .types.message import Message
 from .types.update import Update
 from .types.user import User
@@ -136,6 +137,19 @@ class Router:
         """Register a handler for new wall posts."""
         return self._register("wall_post_new", *filters)
 
+    def callback(self, *filters: Callable[..., Any]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """
+        Register a handler for inline button presses (``message_event``).
+
+        ```python
+        @router.callback()
+        async def on_click(callback: CallbackQuery) -> None:
+            v = callback.payload.get("v")
+            await callback.answer(f"Нажато: {v}")
+        ```
+        """
+        return self._register("message_event", *filters)
+
     def on(self, event_type: str, *filters: Callable[..., Any]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """
         Register a handler for any VK event type by name.
@@ -165,6 +179,11 @@ class Router:
             context[Message] = msg
             context[FSMContext] = FSMContext(storage, msg.peer_id, msg.from_id)
             event_obj: Any = msg
+        elif update.type == "message_event":
+            cb = CallbackQuery.from_dict(update.object, bot)
+            context[CallbackQuery] = cb
+            context[FSMContext] = FSMContext(storage, cb.peer_id, cb.user_id)
+            event_obj = cb
         else:
             event_obj = update.object
 
