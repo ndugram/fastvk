@@ -1,0 +1,52 @@
+name: 🚀 Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion! Describe what you want and why.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      placeholder: "What should FastVK be able to do?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem It Solves
+      placeholder: "Right now I have to... / There's no way to..."
+
+  - type: textarea
+    id: api
+    attributes:
+      label: Proposed API
+      description: How would it look in code?
+      placeholder: |
+        ```python
+        from fastvk import FastVK
+
+        bot = FastVK(token="...", group_id=123)
+
+        @bot.new_feature()
+        async def handler(...): ...
+        ```
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      placeholder: "I've considered..."
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched for similar requests
+        - label: This doesn't already exist in the current version
