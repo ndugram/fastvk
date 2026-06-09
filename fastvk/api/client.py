@@ -10,6 +10,7 @@ from ..types.group import Group
 
 if TYPE_CHECKING:
     from ..methods.base import VKMethod
+    from ..types.user import User
 
 _T = TypeVar("_T")
 
@@ -82,6 +83,15 @@ class Bot:
     async def __call__(self, method: VKMethod[_T]) -> _T:
         params = method.model_dump(exclude_none=True)
         return await self._call(method.__api_method__, **params)
+
+    async def get_user(self, user_id: int, fields: str = "") -> User:
+        """Return info about a user by ID."""
+        from ..types.user import User
+        params: dict[str, Any] = {"user_ids": user_id}
+        if fields:
+            params["fields"] = fields
+        data = await self._call("users.get", **params)
+        return User.from_dict(data[0])
 
     async def get_me(self) -> Group:
         """Return info about the community this token belongs to."""

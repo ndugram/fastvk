@@ -1,0 +1,136 @@
+site_name: FastVK
+site_description: Async VK bot framework with FastAPI-style decorators and aiogram-style FSM
+site_url: https://fastvk.ndugram.dev
+
+docs_dir: docs
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/lightbulb-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to system preference
+  features:
+    - content.code.annotate
+    - content.code.copy
+    - content.footnote.tooltips
+    - content.tabs.link
+    - content.tooltips
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.path
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+  logo: logo.svg
+  favicon: logo.svg
+
+repo_name: ndugram/fastvk
+repo_url: https://github.com/ndugram/fastvk
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - tables
+  - attr_list
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - FastVK: index.md
+  - English:
+    - en/index.md
+    - Tutorial:
+      - en/tutorial/index.md
+      - en/tutorial/first-steps.md
+      - en/tutorial/handlers.md
+      - en/tutorial/filters.md
+      - en/tutorial/message.md
+      - en/tutorial/keyboard.md
+      - en/tutorial/fsm.md
+      - en/tutorial/routers.md
+      - en/tutorial/middleware.md
+      - en/tutorial/lifespan.md
+      - en/tutorial/exceptions.md
+    - Reference:
+      - en/reference/index.md
+      - en/reference/fastvk.md
+      - en/reference/bot.md
+      - en/reference/router.md
+      - en/reference/filters.md
+      - en/reference/keyboard.md
+      - en/reference/fsm.md
+      - en/reference/types.md
+      - en/reference/methods.md
+      - en/reference/exceptions.md
+  - Русский:
+    - ru/index.md
+    - Туториал:
+      - ru/tutorial/index.md
+      - ru/tutorial/first-steps.md
+      - ru/tutorial/handlers.md
+      - ru/tutorial/filters.md
+      - ru/tutorial/message.md
+      - ru/tutorial/keyboard.md
+      - ru/tutorial/fsm.md
+      - ru/tutorial/routers.md
+      - ru/tutorial/middleware.md
+      - ru/tutorial/lifespan.md
+      - ru/tutorial/exceptions.md
+    - Справочник:
+      - ru/reference/index.md
+      - ru/reference/fastvk.md
+      - ru/reference/bot.md
+      - ru/reference/router.md
+      - ru/reference/filters.md
+      - ru/reference/keyboard.md
+      - ru/reference/fsm.md
+      - ru/reference/types.md
+      - ru/reference/methods.md
+      - ru/reference/exceptions.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ndugram/fastvk
+  alternate:
+    - name: en - English
+      link: /en/
+    - name: ru - Русский
+      link: /ru/

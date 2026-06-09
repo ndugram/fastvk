@@ -192,6 +192,24 @@ class Message(BaseModel):
             disable_mentions=int(disable_mentions) if disable_mentions else None,
         )
 
+    async def pin(self) -> dict:
+        """Pin this message in the conversation."""
+        assert self._bot is not None
+        return await self._bot.messages.pin(peer_id=self.peer_id, message_id=self.id)
+
+    async def unpin(self) -> int:
+        """Unpin the pinned message in the conversation."""
+        assert self._bot is not None
+        return await self._bot.messages.unpin(peer_id=self.peer_id)
+
+    async def mark_as_read(self) -> int:
+        """Mark this message as read."""
+        assert self._bot is not None
+        return await self._bot.messages.markAsRead(
+            peer_id=self.peer_id,
+            start_message_id=self.id,
+        )
+
     async def typing(self, action: ChatAction | str = "typing") -> None:
         """Send a chat action indicator (default: "печатает...")."""
         assert self._bot is not None

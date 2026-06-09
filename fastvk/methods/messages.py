@@ -78,6 +78,51 @@ class MessagesGetConversations(VKMethod[dict]):
     extended: int = 0
 
 
+class MessagesPin(VKMethod[dict]):
+    """Pin a message in a conversation. Returns the pinned message object."""
+
+    __returning__ = dict
+    __api_method__ = "messages.pin"
+
+    peer_id: int
+    message_id: int | None = None
+    conversation_message_id: int | None = None
+
+
+class MessagesUnpin(VKMethod[int]):
+    """Unpin a message in a conversation. Returns 1 on success."""
+
+    __returning__ = int
+    __api_method__ = "messages.unpin"
+
+    peer_id: int
+
+
+class MessagesMarkAsRead(VKMethod[int]):
+    """Mark messages as read. Returns 1 on success."""
+
+    __returning__ = int
+    __api_method__ = "messages.markAsRead"
+
+    peer_id: int | None = None
+    message_ids: str | None = None
+    start_message_id: int | None = None
+
+
+class MessagesGetHistory(VKMethod[dict]):
+    """Get message history for a conversation."""
+
+    __returning__ = dict
+    __api_method__ = "messages.getHistory"
+
+    peer_id: int
+    offset: int = 0
+    count: int = 20
+    start_message_id: int | None = None
+    rev: int = 0
+    extended: int = 0
+
+
 class MessagesEdit(VKMethod[int]):
     """Edit a previously sent message. Returns 1 on success."""
 
