@@ -1,0 +1,96 @@
+name: 🐛 Bug Report
+description: Report something that isn't working correctly
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! Fill this out so we can investigate quickly.
+
+        **For security vulnerabilities — do NOT open an issue. Email n7for8572@gmail.com instead.**
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Clear description of what the bug is
+      placeholder: "Describe the bug here..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      placeholder: "What should happen instead..."
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Minimal Reproduction
+      description: Smallest possible code that reproduces the bug
+      placeholder: |
+        ```python
+        from fastvk import FastVK
+
+        bot = FastVK(token="...", group_id=123)
+
+        @bot.message()
+        async def handler(message): ...
+
+        bot.run_polling()
+        ```
+
+  - type: input
+    id: fastvk-version
+    attributes:
+      label: FastVK Version
+      placeholder: "e.g., 0.0.1"
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      placeholder: "e.g., 3.12.0"
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other
+
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Traceback
+      placeholder: |
+        ```
+        Traceback (most recent call last):
+          ...
+        ```
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched for similar issues
+          required: true
+        - label: I tested with the latest version
+          required: true
