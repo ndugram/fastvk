@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .state import State
-    from .storage import BaseStorage
+from .state import State
+from .storage import BaseStorage
 
 
 class FSMContext:
@@ -45,9 +42,7 @@ class FSMContext:
         Accepts a :class:`~fastvk.fsm.State` instance, a raw string,
         or ``None`` to clear the state without wiping data.
         """
-        from .state import State as _State
-
-        if isinstance(state, _State):
+        if isinstance(state, State):
             state = state.state
         await self._storage.set_state(self._key, state)
 
