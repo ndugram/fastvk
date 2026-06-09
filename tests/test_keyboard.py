@@ -47,6 +47,44 @@ class TestButton:
         btn = Button.location()
         assert btn["action"]["type"] == "location"
 
+    def test_vkpay_type(self) -> None:
+        btn = Button.vkpay(action="pay-to-group", group_id=123, amount=100, description="Оплата")
+        assert btn["action"]["type"] == "vkpay"
+
+    def test_vkpay_pay_to_group_hash(self) -> None:
+        btn = Button.vkpay(action="pay-to-group", group_id=123, amount=100, description="Оплата")
+        hash_str = btn["action"]["hash"]
+        assert "action=pay-to-group" in hash_str
+        assert "group_id=123" in hash_str
+        assert "amount=100" in hash_str
+        assert "description=Оплата" in hash_str
+
+    def test_vkpay_transfer_to_group_hash(self) -> None:
+        btn = Button.vkpay(action="transfer-to-group", group_id=123, aid=1)
+        hash_str = btn["action"]["hash"]
+        assert "action=transfer-to-group" in hash_str
+        assert "group_id=123" in hash_str
+        assert "aid=1" in hash_str
+
+    def test_vkpay_transfer_to_user_hash(self) -> None:
+        btn = Button.vkpay(action="transfer-to-user", user_id=456, aid=1)
+        hash_str = btn["action"]["hash"]
+        assert "action=transfer-to-user" in hash_str
+        assert "user_id=456" in hash_str
+        assert "aid=1" in hash_str
+
+    def test_vkpay_empty_description_omitted(self) -> None:
+        btn = Button.vkpay(action="pay-to-group", group_id=1, amount=50)
+        assert "description" not in btn["action"]["hash"]
+
+    def test_vkpay_no_color_key(self) -> None:
+        btn = Button.vkpay(action="transfer-to-group", group_id=1, aid=1)
+        assert "color" not in btn
+
+    def test_vkpay_default_action_is_pay_to_group(self) -> None:
+        btn = Button.vkpay(group_id=1, amount=10)
+        assert btn["action"]["hash"].startswith("action=pay-to-group")
+
 
 class TestKeyboard:
     def test_row_appends_row(self) -> None:

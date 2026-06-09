@@ -48,6 +48,25 @@ Button.location() -> Button
 
 Creates a button that requests the user's geolocation.
 
+### Button.vkpay
+
+```python
+Button.vkpay(
+    *,
+    action: Literal["pay-to-group", "transfer-to-group", "transfer-to-user"] = "pay-to-group",
+    group_id: int | None = None,
+    user_id: int | None = None,
+    amount: int | None = None,
+    description: str = "",
+    merchant_id: int | None = None,
+    aid: int | None = None,
+) -> ButtonDict
+```
+
+Creates a VK Pay button. Builds the `hash` parameter internally from the provided arguments.
+
+Only works inside `Keyboard(inline=True)`.
+
 ## Color
 
 ```python
