@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, get_type_hints
+
+logger = logging.getLogger("fastvk")
 
 from .filters.builtin import _normalize_filter
 from .types.callback import CallbackQuery
@@ -68,6 +71,18 @@ class _IncludeDef:
     router: Router
 
 
+def _log_handler(event_type: str, fn: Callable[..., Any], context: dict[type, Any]) -> None:
+    parts = [f"← {event_type}", f"→ {fn.__name__}()"]
+    msg = context.get(Message)
+    if msg is not None:
+        user = msg.from_user
+        if user is not None:
+            parts.append(f"[{user.full_name}  id={user.id}]")
+        else:
+            parts.append(f"[peer={msg.peer_id}]")
+    logger.info("  ".join(parts))
+
+
 async def _run_filter(f: Callable[..., Any], event: Any, context: dict[type, Any]) -> bool:
     result = f(event, context)
     if asyncio.iscoroutine(result):
@@ -97,6 +112,12 @@ class Router:
 
     def include_router(self, router: Router) -> None:
         self._sub_routers.append(_IncludeDef(router=router))
+
+    def _collect_all_handlers(self) -> list[_HandlerDef]:
+        result = list(self._handlers)
+        for inc in self._sub_routers:
+            result.extend(inc.router._collect_all_handlers())
+        return result
 
     def _register(
         self,
@@ -220,7 +241,11 @@ class Router:
 
         if update.type == "message_new":
             msg = Message.from_dict(update.object["message"], bot)
+            raw_user = await bot.users.get(user_ids=msg.from_id)
+            user = User.from_dict(raw_user[0])
+            msg._from_user = user
             context[Message] = msg
+            context[User] = user
             context[FSMContext] = FSMContext(storage, msg.peer_id, msg.from_id)
             event_obj: Any = msg
         elif update.type == "message_event":
@@ -236,18 +261,18 @@ class Router:
                 continue
             passed = all([await _run_filter(f, event_obj, context) for f in handler.filters])
             if passed:
-                if update.type == "message_new" and User not in context:
-                    if any(ann is User for _, ann in _get_params(handler.callback)):
-                        msg = context[Message]
-                        raw = await bot.users.get(user_ids=msg.from_id)
-                        context[User] = User.from_dict(raw[0])
                 kwargs = _resolve_kwargs(handler.callback, context)
+                _log_handler(update.type, handler.callback, context)
                 try:
                     if inspect.iscoroutinefunction(handler.callback):
                         await handler.callback(**kwargs)
                     else:
                         handler.callback(**kwargs)
                 except Exception as exc:
+                    logger.exception(
+                        "← %s  [%s]  unhandled exception",
+                        update.type, handler.callback.__name__,
+                    )
                     if not await self._dispatch_error(exc, context):
                         raise
                 return True
