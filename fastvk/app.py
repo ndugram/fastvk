@@ -131,11 +131,14 @@ class FastVK(Router):
         return mw
 
     async def _process_update(self, update: Update) -> None:
-        await self.middleware_manager.trigger(
+        logger.info("Update: %s", update.type)
+        handled = await self.middleware_manager.trigger(
             lambda evt, data: self.feed_update(update, self.bot, self.storage),
             update,
             {},
         )
+        if not handled:
+            logger.debug("No handler for %s", update.type)
 
     async def _run_polling(self) -> None:
         logger.info("FastVK started (group_id=%d)", self.group_id)

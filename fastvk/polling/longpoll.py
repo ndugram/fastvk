@@ -49,6 +49,7 @@ class LongPoller:
         """Yield updates indefinitely until cancelled."""
         server, key, ts = await self._get_server()
         session = await self.api._get_session()
+        logger.info("Polling started")
 
         while True:
             try:
@@ -64,17 +65,20 @@ class LongPoller:
                     if failed == 1:
                         ts = data["ts"]
                     else:
+                        logger.warning("Long poll failed=%d, re-fetching server", failed)
                         server, key, ts = await self._get_server()
                     continue
 
                 ts = data["ts"]
                 for raw in data.get("updates", []):
-                    yield Update(
+                    update = Update(
                         type=raw["type"],
                         object=raw["object"],
                         group_id=raw.get("group_id", self.group_id),
                         event_id=raw.get("event_id", ""),
                     )
+                    logger.debug("Update: %s", update.type)
+                    yield update
 
             except (asyncio.CancelledError, KeyboardInterrupt):
                 return
