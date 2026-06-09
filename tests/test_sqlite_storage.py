@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+pytest.importorskip("aiosqlite")
+
 from fastvk.fsm.context import FSMContext
 from fastvk.fsm.sqlite import SQLiteStorage
 from fastvk.fsm.state import State, StatesGroup
