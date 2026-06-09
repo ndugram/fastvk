@@ -7,6 +7,7 @@ from .keyboard import Button, Keyboard
 from .types.callback import CallbackQuery
 from .types.group import Group
 from .filters.magic import F
+from .filters.builtin import Command, CommandHelp, CommandStart
 from .enums import ChatAction, Color, ParseMode
 from . import enums
 from . import filters
@@ -18,6 +19,7 @@ __all__ = [
     "FastVK", "Router", "Bot",
     "Button", "Keyboard",
     "CallbackQuery", "Group", "F",
+    "Command", "CommandStart", "CommandHelp",
     "ChatAction", "Color", "ParseMode",
     "enums", "filters", "fsm", "methods", "types",
 ]
