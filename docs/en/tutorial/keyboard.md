@@ -23,7 +23,45 @@ Button.link("GitHub", url="https://github.com")
 
 # Location button (requests user's location)
 Button.location()
+
+# VK Pay button
+Button.vkpay(action="pay-to-group", group_id=123, amount=100, description="Donation")
+Button.vkpay(action="transfer-to-group", group_id=123, aid=1)
+Button.vkpay(action="transfer-to-user", user_id=456, aid=1)
 ```
+
+### VK Pay button
+
+`Button.vkpay` builds the internal `hash` string from typed parameters — no manual string construction needed.
+
+```python
+# Payment to group (most common)
+Button.vkpay(
+    action="pay-to-group",
+    group_id=123456,
+    amount=100,           # rubles
+    description="Donate",
+)
+
+# Transfer to group
+Button.vkpay(action="transfer-to-group", group_id=123456, aid=1)
+
+# Transfer to user
+Button.vkpay(action="transfer-to-user", user_id=654321, aid=1)
+```
+
+| Parameter | Required for | Description |
+|---|---|---|
+| `action` | all | `"pay-to-group"` / `"transfer-to-group"` / `"transfer-to-user"` |
+| `group_id` | group actions | Target group ID |
+| `user_id` | `transfer-to-user` | Target user ID |
+| `amount` | `pay-to-group` | Amount in rubles |
+| `description` | `pay-to-group` | Payment description |
+| `merchant_id` | optional | Merchant identifier |
+| `aid` | transfer actions | Additional ID |
+
+!!! note
+    VK Pay buttons only work on **inline** keyboards (`Keyboard(inline=True)`).
 
 ### Button colors
 
