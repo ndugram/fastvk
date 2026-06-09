@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.svg" width="480">
+  <img src="https://raw.githubusercontent.com/ndugram/fastvk/master/docs/logo.svg" width="480">
 </p>
 <p align="center">
     <em>Async VK bot framework with FastAPI-style decorators and aiogram-style FSM.</em>
