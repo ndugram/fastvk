@@ -85,3 +85,28 @@ Requires `pip install fastvk[redis]` (redis>=8.0.0).
 Keys stored as:
 - `{prefix}:state:{peer_id}:{user_id}`
 - `{prefix}:data:{peer_id}:{user_id}` (JSON)
+
+## SQLiteStorage
+
+```python
+from fastvk.fsm.sqlite import SQLiteStorage
+
+# default path: "fastvk_fsm.db"
+storage = SQLiteStorage("bot.db")
+
+# custom table (useful when sharing a DB file between bots)
+storage = SQLiteStorage("shared.db", table="mybot_fsm")
+```
+
+Requires `pip install fastvk[sqlite]` (aiosqlite>=0.20.0).
+
+Table schema:
+```sql
+CREATE TABLE fastvk_fsm (
+    peer_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    state   TEXT,
+    data    TEXT NOT NULL DEFAULT '{}',
+    PRIMARY KEY (peer_id, user_id)
+)
+```

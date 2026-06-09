@@ -89,6 +89,8 @@ nav:
       - en/tutorial/background-tasks.md
       - en/tutorial/lifespan.md
       - en/tutorial/exceptions.md
+      - en/tutorial/sqlite-storage.md
+      - en/tutorial/webhook.md
     - Reference:
       - en/reference/index.md
       - en/reference/fastvk.md
@@ -115,6 +117,8 @@ nav:
       - ru/tutorial/background-tasks.md
       - ru/tutorial/lifespan.md
       - ru/tutorial/exceptions.md
+      - ru/tutorial/sqlite-storage.md
+      - ru/tutorial/webhook.md
     - Справочник:
       - ru/reference/index.md
       - ru/reference/fastvk.md

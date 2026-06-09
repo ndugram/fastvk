@@ -17,7 +17,7 @@ from fastvk import FastVK, Bot, Button, CallbackQuery, Keyboard, Router
 from fastvk.filters import Command, FromUser, IsChat, StateFilter, Text
 from fastvk.fsm import FSMContext, State, StatesGroup
 from fastvk.middleware import BaseMiddleware
-from fastvk.types import Message, Update, User
+from fastvk.types import Message, User
 
 logging.basicConfig(level=logging.INFO)
 

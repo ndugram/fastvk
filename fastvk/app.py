@@ -119,3 +119,91 @@ class FastVK(Router):
             asyncio.run(self._run_polling())
         except KeyboardInterrupt:
             logger.info("FastVK stopped by user")
+
+    async def _run_webhook(
+        self,
+        *,
+        confirmation_token: str,
+        host: str,
+        port: int,
+        path: str,
+        secret: str | None,
+    ) -> None:
+        from aiohttp import web
+        from .webhook import WebhookHandler
+
+        self._stats["started_at"] = time.monotonic()
+        logger.info("FastVK webhook mode (group_id=%d)  %s:%d%s", self.group_id, host, port, path)
+
+        if self._dashboard_enabled:
+            from .dashboard.server import Dashboard
+            dash = Dashboard(self, host=self._dashboard_host, port=self._dashboard_port)
+            await dash.start()
+
+        handler = WebhookHandler(self, confirmation_token=confirmation_token, secret=secret)
+        aioapp = web.Application()
+        aioapp.router.add_post(path, handler.handle)
+
+        runner = web.AppRunner(aioapp, access_log=None)
+        await runner.setup()
+        site = web.TCPSite(runner, host, port)
+        await site.start()
+        logger.info("Listening at http://%s:%d%s", host, port, path)
+
+        stop_event = asyncio.Event()
+        try:
+            if self._lifespan is not None:
+                async with self._lifespan(self):
+                    await stop_event.wait()
+            else:
+                await stop_event.wait()
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            logger.info("Webhook stopped")
+        finally:
+            await runner.cleanup()
+            await self.bot.close()
+            await self.storage.close()
+
+    def run_webhook(
+        self,
+        *,
+        confirmation_token: str,
+        host: str = "0.0.0.0",
+        port: int = 8080,
+        path: str = "/",
+        secret: str | None = None,
+    ) -> None:
+        """
+        Start an aiohttp server that receives VK Callback API events.
+
+        *confirmation_token* — the string shown in VK group settings
+        under API → Callback API → Confirmation code.
+
+        ```python
+        bot.run_webhook(
+            confirmation_token="abc123",
+            host="0.0.0.0",
+            port=8080,
+            path="/vk",
+            secret="my_secret",   # optional
+        )
+        ```
+        """
+        if not logging.root.handlers:
+            logging.basicConfig(
+                level=logging.INFO,
+                format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
+                datefmt="%H:%M:%S",
+            )
+        try:
+            asyncio.run(
+                self._run_webhook(
+                    confirmation_token=confirmation_token,
+                    host=host,
+                    port=port,
+                    path=path,
+                    secret=secret,
+                )
+            )
+        except KeyboardInterrupt:
+            logger.info("FastVK stopped by user")

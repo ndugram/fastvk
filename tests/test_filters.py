@@ -1,16 +1,12 @@
 from __future__ import annotations
 
-from typing import Any
-from unittest.mock import MagicMock
 
-import pytest
 
 from fastvk.filters.builtin import Command, Text, StateFilter
-from fastvk.filters.magic import F, MagicFilter
+from fastvk.filters.magic import F
 from fastvk.fsm.context import FSMContext
 from fastvk.fsm.state import State, StatesGroup
 from fastvk.fsm.storage import MemoryStorage
-from fastvk.types.message import Message
 
 
 class _FakeMsg:

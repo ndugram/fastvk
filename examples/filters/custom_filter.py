@@ -8,7 +8,6 @@ import os
 from typing import Any
 
 from fastvk import FastVK
-from fastvk.filters import Command
 from fastvk.types import Message
 
 bot = FastVK(token=os.environ["VK_TOKEN"], group_id=int(os.environ["VK_GROUP_ID"]))

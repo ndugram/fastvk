@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 
 from fastvk.exceptions import (
     FastVKError,

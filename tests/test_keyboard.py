@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
 
 from fastvk.keyboard import Button, Keyboard
 from fastvk.enums.color import Color
