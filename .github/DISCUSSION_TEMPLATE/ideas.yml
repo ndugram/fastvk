@@ -1,0 +1,33 @@
+---
+name: Feature Idea
+about: Propose a new feature or improvement for FastVK
+labels: ["enhancement", "discussion"]
+title: "[Idea] "
+---
+
+## Feature Description
+
+Describe the feature you'd like to see...
+
+
+## Problem or Use Case
+
+What problem does this solve?
+
+
+## Proposed API
+
+How would it look in code?
+
+```python
+from fastvk import ...
+```
+
+
+## Alternatives Considered
+
+Any alternatives you've thought about?
+
+
+---
+Thanks for sharing your idea! 🚀
