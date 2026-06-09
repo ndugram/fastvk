@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Union
+from typing import Any, Literal, Union
 
 from .enums.color import Color
 
@@ -62,6 +62,47 @@ class Button:
     def location() -> ButtonDict:
         """Button that requests the user's location."""
         return {"action": {"type": "location"}}
+
+    @staticmethod
+    def vkpay(
+        *,
+        action: Literal["pay-to-group", "transfer-to-group", "transfer-to-user"] = "pay-to-group",
+        group_id: int | None = None,
+        user_id: int | None = None,
+        amount: int | None = None,
+        description: str = "",
+        merchant_id: int | None = None,
+        aid: int | None = None,
+    ) -> ButtonDict:
+        """
+        VK Pay button. Builds the ``hash`` parameter from typed arguments.
+
+        ```python
+        # Payment to group
+        Button.vkpay(action="pay-to-group", group_id=123, amount=100, description="Оплата")
+
+        # Transfer to group
+        Button.vkpay(action="transfer-to-group", group_id=123, aid=1)
+
+        # Transfer to user
+        Button.vkpay(action="transfer-to-user", user_id=456, aid=1)
+        ```
+        """
+        params: dict[str, Any] = {"action": action}
+        if group_id is not None:
+            params["group_id"] = group_id
+        if user_id is not None:
+            params["user_id"] = user_id
+        if amount is not None:
+            params["amount"] = amount
+        if description:
+            params["description"] = description
+        if merchant_id is not None:
+            params["merchant_id"] = merchant_id
+        if aid is not None:
+            params["aid"] = aid
+        hash_str = "&".join(f"{k}={v}" for k, v in params.items())
+        return {"action": {"type": "vkpay", "hash": hash_str}}
 
 
 class Keyboard:
