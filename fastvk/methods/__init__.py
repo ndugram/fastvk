@@ -2,11 +2,13 @@ from .base import VKMethod
 from .groups import GroupsGetById, GroupsGetLongPollServer, GroupsGetMembers
 from .messages import (
     MessagesDelete,
+    MessagesEdit,
     MessagesGetById,
     MessagesGetConversations,
     MessagesGetLongPollServer,
     MessagesSend,
     MessagesSendEventAnswer,
+    MessagesSetActivity,
 )
 from .users import UsersGet, UsersSearch
 
@@ -15,6 +17,8 @@ from .users import UsersGet, UsersSearch
 _REGISTRY: dict[str, type[VKMethod]] = {
     "messages.send": MessagesSend,
     "messages.delete": MessagesDelete,
+    "messages.edit": MessagesEdit,
+    "messages.setActivity": MessagesSetActivity,
     "messages.getById": MessagesGetById,
     "messages.getConversations": MessagesGetConversations,
     "messages.sendMessageEventAnswer": MessagesSendEventAnswer,
@@ -31,6 +35,8 @@ __all__ = [
     # messages
     "MessagesSend",
     "MessagesDelete",
+    "MessagesEdit",
+    "MessagesSetActivity",
     "MessagesGetById",
     "MessagesGetConversations",
     "MessagesGetLongPollServer",
