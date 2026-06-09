@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, get_type_hints
 
 logger = logging.getLogger("fastvk")
 
+from .background import BackgroundTasks
 from .filters.builtin import _normalize_filter
 from .types.callback import CallbackQuery
 from .types.message import Message
@@ -265,6 +266,8 @@ class Router:
                 continue
             passed = all([await _run_filter(f, event_obj, context) for f in handler.filters])
             if passed:
+                bg = BackgroundTasks()
+                context[BackgroundTasks] = bg
                 kwargs = _resolve_kwargs(handler.callback, context)
                 _log_handler(update.type, handler.callback, context)
                 try:
@@ -279,6 +282,8 @@ class Router:
                     )
                     if not await self._dispatch_error(exc, context):
                         raise
+                if bg._tasks:
+                    asyncio.create_task(bg._run())
                 return True
 
         for inc in self._sub_routers:
