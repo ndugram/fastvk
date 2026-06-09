@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 if TYPE_CHECKING:
     from ..api.client import Bot
+    from ..enums.parse_mode import ParseMode
     from ..keyboard import Keyboard
     from .user import User
 
@@ -54,11 +55,14 @@ class Message(BaseModel):
         text: str,
         *,
         keyboard: Keyboard | str | None = None,
+        parse_mode: ParseMode | str | None = None,
         **kwargs: Any,
     ) -> Any:
         assert self._bot is not None
         if keyboard is not None:
             kwargs["keyboard"] = str(keyboard)
+        if parse_mode is not None:
+            kwargs["content_source"] = str(parse_mode)
         return await self._bot.messages.send(
             peer_id=self.peer_id,
             message=text,
