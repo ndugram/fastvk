@@ -85,3 +85,28 @@ storage = RedisStorage(Redis(...), prefix="fastvk")
 Ключи хранятся как:
 - `{prefix}:state:{peer_id}:{user_id}`
 - `{prefix}:data:{peer_id}:{user_id}` (JSON)
+
+## SQLiteStorage
+
+```python
+from fastvk.fsm.sqlite import SQLiteStorage
+
+# путь по умолчанию: "fastvk_fsm.db"
+storage = SQLiteStorage("bot.db")
+
+# кастомное имя таблицы (если несколько ботов делят один файл БД)
+storage = SQLiteStorage("shared.db", table="mybot_fsm")
+```
+
+Требует `pip install fastvk[sqlite]` (aiosqlite>=0.20.0).
+
+Схема таблицы:
+```sql
+CREATE TABLE fastvk_fsm (
+    peer_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    state   TEXT,
+    data    TEXT NOT NULL DEFAULT '{}',
+    PRIMARY KEY (peer_id, user_id)
+)
+```
