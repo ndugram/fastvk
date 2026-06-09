@@ -250,7 +250,11 @@ class Router:
             event_obj: Any = msg
         elif update.type == "message_event":
             cb = CallbackQuery.from_dict(update.object, bot)
+            raw_user = await bot.users.get(user_ids=cb.user_id)
+            user = User.from_dict(raw_user[0])
+            cb._from_user = user
             context[CallbackQuery] = cb
+            context[User] = user
             context[FSMContext] = FSMContext(storage, cb.peer_id, cb.user_id)
             event_obj = cb
         else:
