@@ -57,6 +57,12 @@ class _HandlerDef:
     event_type: str
 
 
+@dataclass(frozen=True, slots=True)
+class _ErrorHandlerDef:
+    callback: Callable[..., Any]
+    exc_types: tuple[type[BaseException], ...]
+
+
 @dataclass(slots=True)
 class _IncludeDef:
     router: Router
@@ -86,6 +92,7 @@ class Router:
 
     def __init__(self) -> None:
         self._handlers: list[_HandlerDef] = []
+        self._error_handlers: list[_ErrorHandlerDef] = []
         self._sub_routers: list[_IncludeDef] = []
 
     def include_router(self, router: Router) -> None:
@@ -150,6 +157,43 @@ class Router:
         """
         return self._register("message_event", *filters)
 
+    def exception_handler(self, *exc_types: type[BaseException]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """
+        Register an error handler for one or more exception types.
+
+        ```python
+        from fastvk.exceptions import VKAPIError
+
+        @bot.exception_handler(VKAPIError)
+        async def on_vk_error(error: VKAPIError, message: Message) -> None:
+            await message.answer("VK API недоступен")
+
+        @bot.exception_handler()
+        async def on_any_error(error: Exception, message: Message) -> None:
+            await message.answer(f"Ошибка: {error}")
+        ```
+        """
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+            types = exc_types if exc_types else (Exception,)
+            self._error_handlers.append(_ErrorHandlerDef(callback=func, exc_types=types))
+            return func
+        return decorator
+
+    async def _dispatch_error(self, exc: BaseException, context: dict[type, Any]) -> bool:
+        err_context = {**context, type(exc): exc, Exception: exc, BaseException: exc}
+        for eh in self._error_handlers:
+            if isinstance(exc, eh.exc_types):
+                kwargs = _resolve_kwargs(eh.callback, err_context)
+                if inspect.iscoroutinefunction(eh.callback):
+                    await eh.callback(**kwargs)
+                else:
+                    eh.callback(**kwargs)
+                return True
+        for inc in self._sub_routers:
+            if await inc.router._dispatch_error(exc, context):
+                return True
+        return False
+
     def on(self, event_type: str, *filters: Callable[..., Any]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """
         Register a handler for any VK event type by name.
@@ -198,10 +242,14 @@ class Router:
                         raw = await bot.users.get(user_ids=msg.from_id)
                         context[User] = User.from_dict(raw[0])
                 kwargs = _resolve_kwargs(handler.callback, context)
-                if inspect.iscoroutinefunction(handler.callback):
-                    await handler.callback(**kwargs)
-                else:
-                    handler.callback(**kwargs)
+                try:
+                    if inspect.iscoroutinefunction(handler.callback):
+                        await handler.callback(**kwargs)
+                    else:
+                        handler.callback(**kwargs)
+                except Exception as exc:
+                    if not await self._dispatch_error(exc, context):
+                        raise
                 return True
 
         for inc in self._sub_routers:
