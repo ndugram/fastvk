@@ -68,8 +68,20 @@ class Dashboard:
 
         self._runner = web.AppRunner(aioapp, access_log=None)
         await self._runner.setup()
-        site = web.TCPSite(self._runner, self._host, self._port)
-        await site.start()
+
+        port = self._port
+        for _ in range(10):
+            try:
+                site = web.TCPSite(self._runner, self._host, port)
+                await site.start()
+                break
+            except OSError:
+                port += 1
+        else:
+            logger.warning("Dashboard could not bind to any port in %d-%d", self._port, port)
+            return
+
+        self._port = port
         logger.info("Dashboard running at http://%s:%d", self._host, self._port)
 
     async def stop(self) -> None:
