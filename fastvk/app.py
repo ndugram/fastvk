@@ -6,7 +6,7 @@ from typing import Annotated, TYPE_CHECKING
 
 from annotated_doc import Doc
 
-from .api.client import APIClient
+from .api.client import Bot
 from .fsm.storage import BaseStorage, MemoryStorage
 from .middleware.base import BaseMiddleware, MiddlewareManager
 from .polling.longpoll import LongPoller
@@ -101,7 +101,7 @@ class FastVK(Router):
         ] = None,
     ) -> None:
         super().__init__()
-        self.api = APIClient(token=token, version=api_version)
+        self.bot = Bot(token=token, version=api_version)
         self.group_id = group_id
         self.storage: BaseStorage = storage or MemoryStorage()
 
@@ -132,21 +132,21 @@ class FastVK(Router):
 
     async def _process_update(self, update: Update) -> None:
         await self.middleware_manager.trigger(
-            lambda evt, data: self.feed_update(update, self.api, self.storage),
+            lambda evt, data: self.feed_update(update, self.bot, self.storage),
             update,
             {},
         )
 
     async def _run_polling(self) -> None:
         logger.info("FastVK started (group_id=%d)", self.group_id)
-        poller = LongPoller(api=self.api, group_id=self.group_id)
+        poller = LongPoller(api=self.bot, group_id=self.group_id)
         try:
             async for update in poller.listen():
                 asyncio.create_task(self._process_update(update))
         except (KeyboardInterrupt, asyncio.CancelledError):
             logger.info("Polling stopped")
         finally:
-            await self.api.close()
+            await self.bot.close()
             await self.storage.close()
 
     def run_polling(self) -> None:

@@ -3,72 +3,80 @@ from __future__ import annotations
 import asyncio
 import inspect
 from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, get_type_hints
 
 from .filters.builtin import _normalize_filter
 from .types.message import Message
 from .types.update import Update
+from .types.user import User
 
 if TYPE_CHECKING:
-    from .api.client import APIClient
+    from .api.client import Bot
     from .fsm.context import FSMContext
     from .fsm.storage import BaseStorage
 
 
+_sig_cache: dict[Callable[..., Any], list[tuple[str, Any]]] = {}
+
+
+def _get_params(fn: Callable[..., Any]) -> list[tuple[str, Any]]:
+    cached = _sig_cache.get(fn)
+    if cached is not None:
+        return cached
+    try:
+        hints = get_type_hints(fn)
+    except Exception:
+        hints = {}
+    result = [(name, hints.get(name)) for name in inspect.signature(fn).parameters]
+    _sig_cache[fn] = result
+    return result
+
+
+def _resolve_kwargs(fn: Callable[..., Any], context: dict[type, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {}
+    for name, annotation in _get_params(fn):
+        if annotation is None:
+            continue
+        if annotation in context:
+            kwargs[name] = context[annotation]
+            continue
+        if isinstance(annotation, type):
+            for ctx_type, val in context.items():
+                if isinstance(ctx_type, type) and issubclass(ctx_type, annotation):
+                    kwargs[name] = val
+                    break
+    return kwargs
+
+
 @dataclass(frozen=True, slots=True)
 class _HandlerDef:
-    """Unresolved handler stored on :class:`Router` before an update arrives."""
-
-    callback: Callable
-    filters: tuple[Callable, ...]
+    callback: Callable[..., Any]
+    filters: tuple[Callable[..., Any], ...]
     event_type: str
 
 
 @dataclass(slots=True)
 class _IncludeDef:
-    """Represents a deferred ``include_router()`` call."""
-
     router: Router
 
 
-async def _run_filter(f: Callable, event: Any, data: dict) -> bool:
-    result = f(event, data)
+async def _run_filter(f: Callable[..., Any], event: Any, context: dict[type, Any]) -> bool:
+    result = f(event, context)
     if asyncio.iscoroutine(result):
         result = await result
     return bool(result)
 
 
-async def _call_handler(handler: Callable, data: dict) -> Any:
-    """Inject handler parameters by name from *data*, then call it."""
-    sig = inspect.signature(handler)
-    kwargs: dict[str, Any] = {}
-
-    for param_name, param in sig.parameters.items():
-        if param_name in data:
-            kwargs[param_name] = data[param_name]
-        elif param.annotation is not inspect.Parameter.empty:
-            ann = param.annotation
-            for val in data.values():
-                if isinstance(val, ann):
-                    kwargs[param_name] = val
-                    break
-
-    if inspect.iscoroutinefunction(handler):
-        return await handler(**kwargs)
-    return handler(**kwargs)
-
-
 class Router:
     """
-    Groups related event handlers — analogous to aiogram's ``Router``
-    and FastAPI's ``APIRouter``.
+    Groups related event handlers.
 
     ```python
     router = Router()
 
     @router.message(Command("start"))
-    async def start(message: Message, state: FSMContext) -> None:
+    async def start(message: Message) -> None:
         await message.answer("Привет!")
 
     bot.include_router(router)
@@ -80,28 +88,23 @@ class Router:
         self._sub_routers: list[_IncludeDef] = []
 
     def include_router(self, router: Router) -> None:
-        """Mount *router* as a child — its handlers are checked after this router's."""
         self._sub_routers.append(_IncludeDef(router=router))
 
     def _register(
         self,
         event_type: str,
-        *filters: Callable,
-    ) -> Callable[[Callable], Callable]:
-        def decorator(func: Callable) -> Callable:
+        *filters: Callable[..., Any],
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             normalized = tuple(_normalize_filter(f) for f in filters)
             self._handlers.append(
-                _HandlerDef(
-                    callback=func,
-                    filters=normalized,
-                    event_type=event_type,
-                )
+                _HandlerDef(callback=func, filters=normalized, event_type=event_type)
             )
             return func
 
         return decorator
 
-    def message(self, *filters: Callable) -> Callable[[Callable], Callable]:
+    def message(self, *filters: Callable[..., Any]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """
         Register a handler for ``message_new`` events.
 
@@ -110,44 +113,36 @@ class Router:
         async def ping(message: Message) -> None:
             await message.answer("pong")
         ```
-
-        Pass no filters to catch all incoming messages:
-
-        ```python
-        @router.message()
-        async def echo(message: Message) -> None:
-            await message.answer(message.text)
-        ```
         """
         return self._register("message_new", *filters)
 
-    def message_reply(self, *filters: Callable) -> Callable[[Callable], Callable]:
+    def message_reply(self, *filters: Callable[..., Any]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Register a handler for ``message_reply`` events."""
         return self._register("message_reply", *filters)
 
-    def message_allow(self, *filters: Callable) -> Callable[[Callable], Callable]:
+    def message_allow(self, *filters: Callable[..., Any]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Register a handler for ``message_allow`` (newsletter opt-in) events."""
         return self._register("message_allow", *filters)
 
-    def group_join(self, *filters: Callable) -> Callable[[Callable], Callable]:
+    def group_join(self, *filters: Callable[..., Any]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Register a handler fired when a user joins the group."""
         return self._register("group_join", *filters)
 
-    def group_leave(self, *filters: Callable) -> Callable[[Callable], Callable]:
+    def group_leave(self, *filters: Callable[..., Any]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Register a handler fired when a user leaves the group."""
         return self._register("group_leave", *filters)
 
-    def wall_post_new(self, *filters: Callable) -> Callable[[Callable], Callable]:
+    def wall_post_new(self, *filters: Callable[..., Any]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Register a handler for new wall posts."""
         return self._register("wall_post_new", *filters)
 
-    def on(self, event_type: str, *filters: Callable) -> Callable[[Callable], Callable]:
+    def on(self, event_type: str, *filters: Callable[..., Any]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """
         Register a handler for any VK event type by name.
 
         ```python
         @router.on("photo_new")
-        async def new_photo(event: dict, api: APIClient) -> None:
+        async def new_photo(event: dict) -> None:
             print(event)
         ```
         """
@@ -156,22 +151,19 @@ class Router:
     async def feed_update(
         self,
         update: Update,
-        api: APIClient,
+        bot: Bot,
         storage: BaseStorage,
     ) -> bool:
-        """
-        Dispatch *update* to the first matching handler.
+        """Dispatch *update* to the first matching handler. Returns ``True`` if handled."""
+        from .api.client import Bot as _Bot
+        from .fsm.context import FSMContext
 
-        Returns ``True`` if a handler was found and called, ``False`` otherwise.
-        """
-        data: dict[str, Any] = {"api": api, "update": update, "event": update.object}
+        context: dict[type, Any] = {_Bot: bot, Update: update}
 
         if update.type == "message_new":
-            msg = Message.from_dict(update.object["message"], api)
-            from .fsm.context import FSMContext
-
-            data["message"] = msg
-            data["state"] = FSMContext(storage, msg.peer_id, msg.from_id)
+            msg = Message.from_dict(update.object["message"], bot)
+            context[Message] = msg
+            context[FSMContext] = FSMContext(storage, msg.peer_id, msg.from_id)
             event_obj: Any = msg
         else:
             event_obj = update.object
@@ -179,16 +171,22 @@ class Router:
         for handler in self._handlers:
             if handler.event_type != update.type:
                 continue
-
-            passed = all(
-                [await _run_filter(f, event_obj, data) for f in handler.filters]
-            )
+            passed = all([await _run_filter(f, event_obj, context) for f in handler.filters])
             if passed:
-                await _call_handler(handler.callback, data)
+                if update.type == "message_new" and User not in context:
+                    if any(ann is User for _, ann in _get_params(handler.callback)):
+                        msg = context[Message]
+                        raw = await bot.users.get(user_ids=msg.from_id)
+                        context[User] = User.from_dict(raw[0])
+                kwargs = _resolve_kwargs(handler.callback, context)
+                if inspect.iscoroutinefunction(handler.callback):
+                    await handler.callback(**kwargs)
+                else:
+                    handler.callback(**kwargs)
                 return True
 
         for inc in self._sub_routers:
-            if await inc.router.feed_update(update, api, storage):
+            if await inc.router.feed_update(update, bot, storage):
                 return True
 
         return False

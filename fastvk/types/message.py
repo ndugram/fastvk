@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from ..api.client import APIClient
+    from ..api.client import Bot
 
 
 @dataclass(slots=True)
@@ -59,10 +59,10 @@ class Message:
     raw: dict = field(default_factory=dict)
     """Full raw message object as received from VK."""
 
-    _api: APIClient | None = field(default=None, repr=False)
+    _api: Bot | None = field(default=None, repr=False)
 
     @classmethod
-    def from_dict(cls, data: dict, api: APIClient) -> Message:
+    def from_dict(cls, data: dict, api: Bot) -> Message:
         """Build a :class:`Message` from a raw VK message dict."""
         return cls(
             id=data["id"],
@@ -87,7 +87,7 @@ class Message:
         await message.answer("С клавиатурой", keyboard=json.dumps(kb))
         ```
         """
-        assert self._api is not None, "Message is not bound to an APIClient"
+        assert self._api is not None, "Message is not bound to an Bot"
         return await self._api.messages.send(
             peer_id=self.peer_id,
             message=text,
@@ -103,7 +103,7 @@ class Message:
         await message.reply("Получил!")
         ```
         """
-        assert self._api is not None, "Message is not bound to an APIClient"
+        assert self._api is not None, "Message is not bound to an Bot"
         return await self._api.messages.send(
             peer_id=self.peer_id,
             message=text,
@@ -114,7 +114,7 @@ class Message:
 
     async def delete(self, *, delete_for_all: bool = False) -> Any:
         """Delete this message."""
-        assert self._api is not None, "Message is not bound to an APIClient"
+        assert self._api is not None, "Message is not bound to an Bot"
         return await self._api.messages.delete(
             message_ids=self.id,
             delete_for_all=int(delete_for_all),

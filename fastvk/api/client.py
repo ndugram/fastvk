@@ -1,23 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 import aiohttp
 
 from ..exceptions import VKAPIError
 
-if TYPE_CHECKING:
-    pass
-
-VK_API_BASE = "https://api.vk.com/method/"
-
-
 class _APIMethod:
-    """Lazy proxy for a VK API namespace (e.g. ``messages``, ``groups``)."""
-
     __slots__ = ("_client", "_prefix")
 
-    def __init__(self, client: APIClient, prefix: str) -> None:
+    def __init__(self, client: Bot, prefix: str) -> None:
         self._client = client
         self._prefix = prefix
 
@@ -26,11 +18,9 @@ class _APIMethod:
 
 
 class _APICallable:
-    """Callable proxy for a single VK API method (e.g. ``messages.send``)."""
-
     __slots__ = ("_client", "_method")
 
-    def __init__(self, client: APIClient, method: str) -> None:
+    def __init__(self, client: Bot, method: str) -> None:
         self._client = client
         self._method = method
 
@@ -38,18 +28,18 @@ class _APICallable:
         return await self._client._call(self._method, **kwargs)
 
 
-class APIClient:
+class Bot:
     """
-    Async VK API client with dynamic method dispatch.
-
-    Supports any VK API method via attribute access:
+    Async VK Bot API client with dynamic method dispatch.
 
     ```python
-    api = APIClient(token="...")
-    await api.messages.send(peer_id=123, message="Hello", random_id=0)
-    await api.users.get(user_ids=1)
+    bot = Bot(token="vk1.a....")
+    await bot.messages.send(peer_id=123, message="Hello", random_id=0)
+    await bot.users.get(user_ids=1)
     ```
     """
+
+    _base_url = "https://api.vk.com/method/"
 
     def __init__(self, token: str, version: str = "5.199") -> None:
         self.token = token
@@ -64,7 +54,7 @@ class APIClient:
     async def _call(self, method: str, **kwargs: Any) -> Any:
         session = await self._get_session()
         params = {"access_token": self.token, "v": self.version, **kwargs}
-        async with session.post(f"{VK_API_BASE}{method}", data=params) as resp:
+        async with session.post(f"{self._base_url}{method}", data=params) as resp:
             data: dict = await resp.json(content_type=None)
         if "error" in data:
             raise VKAPIError(data["error"])
@@ -74,6 +64,8 @@ class APIClient:
         return _APIMethod(self, name)
 
     async def close(self) -> None:
-        """Close the underlying HTTP session."""
         if self._session and not self._session.closed:
             await self._session.close()
+
+
+APIClient = Bot  # backward compat alias

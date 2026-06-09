@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from .client import APIClient
+from .client import Bot, APIClient
 
-__all__ = ["APIClient"]
+__all__ = ["Bot", "APIClient"]

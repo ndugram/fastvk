@@ -269,7 +269,7 @@ Access the full VK API via the injected `api` parameter:
 
 ```python
 from fastvk import FastVK
-from fastvk.api import APIClient
+from fastvk import Bot
 from fastvk.filters import Command
 from fastvk.types import Message
 
@@ -277,15 +277,15 @@ bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
 
 
 @bot.message(Command("me"))
-async def cmd_me(message: Message, api: APIClient) -> None:
-    users = await api.users.get(user_ids=message.from_id, fields="photo_200")
-    user = users[0]
-    await message.answer(f"Ты: {user['first_name']} {user['last_name']}")
+async def cmd_me(message: Message, bot: Bot) -> None:
+    users = await bot.users.get(user_ids=message.from_id, fields="photo_200")
+    name = f"{users[0]['first_name']} {users[0]['last_name']}"
+    await message.answer(f"Ты: {name}")
 
 
 @bot.message(Command("members"))
-async def cmd_members(message: Message, api: APIClient) -> None:
-    data = await api.groups.getMembers(group_id=bot.group_id, count=1)
+async def cmd_members(message: Message, bot: Bot) -> None:
+    data = await bot.groups.getMembers(group_id=app.group_id, count=1)
     await message.answer(f"Участников в группе: {data['count']}")
 
 
@@ -302,14 +302,14 @@ Handle any VK event type — not just messages:
 
 ```python
 from fastvk import FastVK
-from fastvk.api import APIClient
+from fastvk import Bot
 from fastvk.types import Update
 
 bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
 
 
 @bot.group_join()
-async def on_join(event: dict, api: APIClient) -> None:
+async def on_join(event: dict, bot: Bot) -> None:
     user_id = event.get("user_id")
     await api.messages.send(
         peer_id=user_id,
@@ -336,22 +336,21 @@ if __name__ == "__main__":
 
 ## Dependency injection
 
-Handler parameters are resolved automatically by **name** (with type-based fallback). No manual wiring needed:
+Handler parameters are injected **by type** — declare what you need, framework provides it. No manual wiring:
 
-| Parameter | Type | Description |
-|---|---|---|
-| `message` | `Message` | Parsed message object (for `message_new` events) |
-| `state` | `FSMContext` | FSM context for current user |
-| `api` | `APIClient` | VK API client |
-| `event` | `dict` | Raw event payload |
-| `update` | `Update` | Full update object |
+| Type | What you get |
+|---|---|
+| `Message` | Parsed incoming message (for `message_new` events) |
+| `FSMContext` | FSM context for current user |
+| `Bot` | VK Bot API client |
+| `Update` | Full raw update object |
 
 ```python
 @router.message()
 async def handler(
     message: Message,
     state: FSMContext,
-    api: APIClient,
+    bot: Bot,
 ) -> None:
     ...
 ```

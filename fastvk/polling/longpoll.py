@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from ..types.update import Update
 
 if TYPE_CHECKING:
-    from ..api.client import APIClient
+    from ..api.client import Bot
 
 logger = logging.getLogger("fastvk.polling")
 
@@ -33,7 +33,7 @@ class LongPoller:
 
     def __init__(
         self,
-        api: APIClient,
+        api: Bot,
         group_id: int,
         wait: int = 25,
     ) -> None:

@@ -111,7 +111,9 @@ class StateFilter:
                 self._states.append(s)
 
     async def __call__(self, message: Message, data: dict) -> bool:
-        ctx: FSMContext | None = data.get("state")
+        from ..fsm.context import FSMContext as _FSMContext
+
+        ctx: _FSMContext | None = data.get(_FSMContext)
         current = await ctx.get_state() if ctx is not None else None
         return current in self._states
 
