@@ -13,32 +13,53 @@ class Command:
     Filter that matches messages starting with a bot command.
 
     Handles ``/cmd``, ``/cmd@botname``, and ``/cmd argument`` forms.
+    Custom prefixes are supported via *prefix*.
 
     ```python
     @router.message(Command("start", "help"))
     async def on_start(message: Message) -> None:
         await message.answer("Привет!")
+
+    # also matches !ban and !kick
+    @router.message(Command("ban", "kick", prefix="!/"))
+    async def on_mod(message: Message) -> None: ...
     ```
     """
 
-    def __init__(self, *commands: str) -> None:
-        self.commands = {cmd.lstrip("/") for cmd in commands}
+    def __init__(self, *commands: str, prefix: str = "/") -> None:
+        self.prefix = prefix
+        self.commands = {cmd.lstrip(prefix) for cmd in commands}
 
     def __call__(self, message: Message, data: dict) -> bool:
         if not message.text:
             return False
         text = message.text.strip()
-        for cmd in self.commands:
-            if (
-                text == f"/{cmd}"
-                or text.startswith(f"/{cmd} ")
-                or text.startswith(f"/{cmd}@")
-            ):
-                return True
+        for p in self.prefix:
+            for cmd in self.commands:
+                if (
+                    text == f"{p}{cmd}"
+                    or text.startswith(f"{p}{cmd} ")
+                    or text.startswith(f"{p}{cmd}@")
+                ):
+                    return True
         return False
 
     def __repr__(self) -> str:
-        return f"Command({', '.join(self.commands)!r})"
+        return f"Command({', '.join(self.commands)!r}, prefix={self.prefix!r})"
+
+
+class CommandStart(Command):
+    """Shortcut for ``Command("start")``."""
+
+    def __init__(self) -> None:
+        super().__init__("start")
+
+
+class CommandHelp(Command):
+    """Shortcut for ``Command("help")``."""
+
+    def __init__(self) -> None:
+        super().__init__("help")
 
 
 class Text:

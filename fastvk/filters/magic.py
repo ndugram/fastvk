@@ -50,6 +50,9 @@ class _OpFilter(_BaseFilter):
             return isinstance(v, str) and v.endswith(self._value)
         if self._op == "contains":
             return v is not None and self._value in v
+        if self._op == "regexp":
+            import re
+            return isinstance(v, str) and bool(re.search(self._value, v))
         return False
 
 
@@ -145,6 +148,10 @@ class MagicFilter(_BaseFilter):
     def contains(self, substr: str) -> _OpFilter:
         """Match if *substr* is found in the field value."""
         return _OpFilter(self._path, "contains", substr)
+
+    def regexp(self, pattern: str) -> _OpFilter:
+        """Match if the string field matches the regular expression."""
+        return _OpFilter(self._path, "regexp", pattern)
 
     def __call__(self, event: Any, context: dict) -> bool:  # noqa: ARG002
         return bool(_resolve(event, self._path))
