@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from ..fsm.state import State
-    from ..types.message import Message
+from ..fsm.context import FSMContext
+from ..fsm.state import State
+from ..types.message import Message
 
 
 class Command:
@@ -121,19 +121,15 @@ class StateFilter:
     """
 
     def __init__(self, *states: State | str | None) -> None:
-        from ..fsm.state import State as _State
-
         self._states: list[str | None] = []
         for s in states:
-            if isinstance(s, _State):
+            if isinstance(s, State):
                 self._states.append(s.state)
             else:
                 self._states.append(s)
 
     async def __call__(self, message: Message, data: dict) -> bool:
-        from ..fsm.context import FSMContext as _FSMContext
-
-        ctx: _FSMContext | None = data.get(_FSMContext)
+        ctx: FSMContext | None = data.get(FSMContext)
         current = await ctx.get_state() if ctx is not None else None
         return current in self._states
 
@@ -197,8 +193,6 @@ class IsChat:
 
 def _normalize_filter(f: Any) -> Any:
     """Wrap a bare :class:`~fastvk.fsm.State` in a :class:`StateFilter`."""
-    from ..fsm.state import State as _State
-
-    if isinstance(f, _State):
+    if isinstance(f, State):
         return StateFilter(f)
     return f

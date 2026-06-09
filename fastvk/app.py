@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import collections
 import logging
 import time
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
+from aiohttp import web
+
 
 from .api.client import Bot
 from .types.group import Group
@@ -13,6 +16,10 @@ from .middleware.base import BaseMiddleware, MiddlewareManager
 from .polling.longpoll import LongPoller
 from .router import Router
 from .types.update import Update
+from .logging import setup_logging
+from .dashboard.server import Dashboard
+from .webhook import WebhookHandler
+
 
 logger = logging.getLogger("fastvk")
 
@@ -48,6 +55,7 @@ class FastVK(Router):
             "by_type": {},
             "started_at": None,
         }
+        self._log: collections.deque = collections.deque(maxlen=200)
 
         if middleware is None:
             _mw: list[BaseMiddleware] = []
@@ -69,6 +77,7 @@ class FastVK(Router):
         logger.debug("← %s", update.type)
         self._stats["total"] += 1
         self._stats["by_type"][update.type] = self._stats["by_type"].get(update.type, 0) + 1
+        self._log.appendleft({"t": update.type, "s": round(time.time(), 3)})
         try:
             handled = await self.middleware_manager.trigger(
                 lambda evt, data: self.feed_update(update, self.bot, self.storage),
@@ -98,7 +107,6 @@ class FastVK(Router):
 
     async def _run_polling(self) -> None:
         if self._dashboard_enabled:
-            from .dashboard.server import Dashboard
             dash = Dashboard(self, host=self._dashboard_host, port=self._dashboard_port)
             await dash.start()
 
@@ -110,11 +118,7 @@ class FastVK(Router):
 
     def run_polling(self) -> None:
         if not logging.root.handlers:
-            logging.basicConfig(
-                level=logging.INFO,
-                format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
-                datefmt="%H:%M:%S",
-            )
+            setup_logging()
         try:
             asyncio.run(self._run_polling())
         except KeyboardInterrupt:
@@ -129,14 +133,10 @@ class FastVK(Router):
         path: str,
         secret: str | None,
     ) -> None:
-        from aiohttp import web
-        from .webhook import WebhookHandler
-
         self._stats["started_at"] = time.monotonic()
         logger.info("FastVK webhook mode (group_id=%d)  %s:%d%s", self.group_id, host, port, path)
 
         if self._dashboard_enabled:
-            from .dashboard.server import Dashboard
             dash = Dashboard(self, host=self._dashboard_host, port=self._dashboard_port)
             await dash.start()
 
@@ -190,11 +190,7 @@ class FastVK(Router):
         ```
         """
         if not logging.root.handlers:
-            logging.basicConfig(
-                level=logging.INFO,
-                format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
-                datefmt="%H:%M:%S",
-            )
+            setup_logging()
         try:
             asyncio.run(
                 self._run_webhook(

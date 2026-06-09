@@ -15,6 +15,7 @@ from . import filters
 from . import fsm
 from . import methods
 from . import types
+from .logging import setup_logging
 
 __all__ = [
     "FastVK", "Router", "Bot", "BackgroundTasks",
@@ -23,4 +24,5 @@ __all__ = [
     "Command", "CommandStart", "CommandHelp",
     "ChatAction", "Color", "ParseMode",
     "enums", "filters", "fsm", "methods", "types",
+    "setup_logging",
 ]

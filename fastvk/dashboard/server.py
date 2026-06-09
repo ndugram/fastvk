@@ -65,6 +65,7 @@ class Dashboard:
         aioapp.router.add_get("/", self._handle_index)
         aioapp.router.add_get("/api/info", self._handle_info)
         aioapp.router.add_get("/api/stats", self._handle_stats)
+        aioapp.router.add_get("/api/log", self._handle_log)
 
         self._runner = web.AppRunner(aioapp, access_log=None)
         await self._runner.setup()
@@ -83,6 +84,12 @@ class Dashboard:
 
         self._port = port
         logger.info("Dashboard running at http://%s:%d", self._host, self._port)
+
+    async def _handle_log(self, request: web.Request) -> web.Response:
+        return web.Response(
+            text=json.dumps(list(self._app._log)),
+            content_type="application/json",
+        )
 
     async def stop(self) -> None:
         if self._runner:
