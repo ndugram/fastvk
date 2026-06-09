@@ -4,6 +4,7 @@ from typing import Any
 
 import aiohttp
 
+from ..__meta__ import _api_base_url_, _api_version_
 from ..exceptions import VKAPIError
 
 class _APIMethod:
@@ -39,11 +40,11 @@ class Bot:
     ```
     """
 
-    _base_url = "https://api.vk.com/method/"
+    _base_url = _api_base_url_
+    _version = _api_version_
 
-    def __init__(self, token: str, version: str = "5.199") -> None:
+    def __init__(self, token: str) -> None:
         self.token = token
-        self.version = version
         self._session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
@@ -53,7 +54,7 @@ class Bot:
 
     async def _call(self, method: str, **kwargs: Any) -> Any:
         session = await self._get_session()
-        params = {"access_token": self.token, "v": self.version, **kwargs}
+        params = {"access_token": self.token, "v": self._version, **kwargs}
         async with session.post(f"{self._base_url}{method}", data=params) as resp:
             data: dict = await resp.json(content_type=None)
         if "error" in data:

@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Annotated, TYPE_CHECKING
-
-from annotated_doc import Doc
+from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager
 
 from .api.client import Bot
 from .fsm.storage import BaseStorage, MemoryStorage
@@ -13,97 +12,26 @@ from .polling.longpoll import LongPoller
 from .router import Router
 from .types.update import Update
 
-if TYPE_CHECKING:
-    pass
-
 logger = logging.getLogger("fastvk")
+
+Lifespan = Callable[["FastVK"], AbstractAsyncContextManager[None]]
 
 
 class FastVK(Router):
-    """
-    FastVK application — the root dispatcher and entry point.
-
-    Extends :class:`~fastvk.Router`, so you can register handlers
-    directly on the bot instance or via ``include_router()``.
-
-    ```python
-    from fastvk import FastVK, Router
-    from fastvk.filters import Command
-    from fastvk.types import Message
-
-    bot = FastVK(token="vk1.a...", group_id=123456789)
-
-    @bot.message(Command("start"))
-    async def start(message: Message) -> None:
-        await message.answer("Привет!")
-
-    if __name__ == "__main__":
-        bot.run_polling()
-    ```
-    """
-
     def __init__(
         self,
-        token: Annotated[
-            str,
-            Doc(
-                """
-                VK community token with the required permissions.
-
-                Obtain in community settings → Manage → API usage → Access tokens.
-                The token must have at least the ``messages`` permission.
-                """
-            ),
-        ],
-        group_id: Annotated[
-            int,
-            Doc(
-                """
-                Numeric ID of the VK community.
-
-                Shown in the community URL: ``vk.com/public{group_id}``
-                or retrievable via ``groups.getById``.
-                """
-            ),
-        ],
+        token: str,
+        group_id: int,
         *,
-        api_version: Annotated[
-            str,
-            Doc(
-                """
-                VK API version used for all requests.
-
-                FastVK is tested against 5.199. Avoid downgrading below 5.131.
-                """
-            ),
-        ] = "5.199",
-        storage: Annotated[
-            BaseStorage | None,
-            Doc(
-                """
-                FSM storage backend.
-
-                Defaults to :class:`~fastvk.fsm.MemoryStorage` (in-process, lost on restart).
-                Pass a persistent backend (e.g. Redis) for production bots.
-                """
-            ),
-        ] = None,
-        middleware: Annotated[
-            list[BaseMiddleware] | BaseMiddleware | None,
-            Doc(
-                """
-                Middleware applied to every incoming update.
-
-                Can be a single instance or a list.
-                Middleware is executed in the order provided.
-                """
-            ),
-        ] = None,
+        storage: BaseStorage | None = None,
+        middleware: list[BaseMiddleware] | BaseMiddleware | None = None,
+        lifespan: Lifespan | None = None,
     ) -> None:
         super().__init__()
-        self.bot = Bot(token=token, version=api_version)
+        self.bot = Bot(token=token)
         self.group_id = group_id
         self.storage: BaseStorage = storage or MemoryStorage()
+        self._lifespan: Lifespan | None = lifespan
 
         if middleware is None:
             _mw: list[BaseMiddleware] = []
@@ -114,19 +42,6 @@ class FastVK(Router):
         self.middleware_manager = MiddlewareManager(_mw)
 
     def middleware(self, mw: BaseMiddleware) -> BaseMiddleware:
-        """
-        Register *mw* as global middleware.
-
-        Can be used as a decorator:
-
-        ```python
-        @bot.middleware
-        class Log(BaseMiddleware):
-            async def __call__(self, handler, event, data):
-                print(event)
-                return await handler(event, data)
-        ```
-        """
         self.middleware_manager.register(mw)
         return mw
 
@@ -140,7 +55,7 @@ class FastVK(Router):
         if not handled:
             logger.debug("No handler for %s", update.type)
 
-    async def _run_polling(self) -> None:
+    async def _poll(self) -> None:
         logger.info("FastVK started (group_id=%d)", self.group_id)
         poller = LongPoller(api=self.bot, group_id=self.group_id)
         try:
@@ -152,15 +67,14 @@ class FastVK(Router):
             await self.bot.close()
             await self.storage.close()
 
-    def run_polling(self) -> None:
-        """
-        Start Long Poll and block until interrupted.
+    async def _run_polling(self) -> None:
+        if self._lifespan is not None:
+            async with self._lifespan(self):
+                await self._poll()
+        else:
+            await self._poll()
 
-        ```python
-        if __name__ == "__main__":
-            bot.run_polling()
-        ```
-        """
+    def run_polling(self) -> None:
         if not logging.root.handlers:
             logging.basicConfig(
                 level=logging.INFO,
