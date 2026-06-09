@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import aiohttp
 
 from ..__meta__ import _api_base_url_, _api_version_
 from ..exceptions import VKAPIError
+
+if TYPE_CHECKING:
+    from ..methods.base import VKMethod
+
+_T = TypeVar("_T")
+
 
 class _APIMethod:
     __slots__ = ("_client", "_prefix")
@@ -26,6 +32,10 @@ class _APICallable:
         self._method = method
 
     async def __call__(self, **kwargs: Any) -> Any:
+        from ..methods import _REGISTRY
+        method_cls = _REGISTRY.get(self._method)
+        if method_cls is not None:
+            return await self._client(method_cls(**kwargs))
         return await self._client._call(self._method, **kwargs)
 
 
@@ -33,10 +43,17 @@ class Bot:
     """
     Async VK Bot API client with dynamic method dispatch.
 
+    Supports both dynamic calls and typed :class:`~fastvk.methods.VKMethod` objects:
+
     ```python
     bot = Bot(token="vk1.a....")
+
+    # dynamic (any VK method)
     await bot.messages.send(peer_id=123, message="Hello", random_id=0)
-    await bot.users.get(user_ids=1)
+
+    # typed (IDE autocomplete + validation)
+    from fastvk.methods import MessagesSend
+    await bot(MessagesSend(peer_id=123, message="Hello"))
     ```
     """
 
@@ -60,6 +77,10 @@ class Bot:
         if "error" in data:
             raise VKAPIError(data["error"])
         return data.get("response")
+
+    async def __call__(self, method: VKMethod[_T]) -> _T:
+        params = method.model_dump(exclude_none=True)
+        return await self._call(method.__api_method__, **params)
 
     def __getattr__(self, name: str) -> _APIMethod:
         return _APIMethod(self, name)
