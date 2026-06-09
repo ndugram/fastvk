@@ -7,6 +7,7 @@ from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 
 from .api.client import Bot
+from .types.group import Group
 from .fsm.storage import BaseStorage, MemoryStorage
 from .middleware.base import BaseMiddleware, MiddlewareManager
 from .polling.longpoll import LongPoller
@@ -55,6 +56,10 @@ class FastVK(Router):
         else:
             _mw = [middleware]
         self.middleware_manager = MiddlewareManager(_mw)
+
+    async def get_me(self) -> Group:
+        """Return info about the community this bot belongs to."""
+        return await self.bot.get_me()
 
     def middleware(self, mw: BaseMiddleware) -> BaseMiddleware:
         self.middleware_manager.register(mw)
