@@ -7,10 +7,10 @@ import aiohttp
 from ..__meta__ import _api_base_url_, _api_version_
 from ..exceptions import VKAPIError
 from ..types.group import Group
+from ..types.user import User
 
 if TYPE_CHECKING:
     from ..methods.base import VKMethod
-    from ..types.user import User
 
 _T = TypeVar("_T")
 
@@ -86,7 +86,6 @@ class Bot:
 
     async def get_user(self, user_id: int, fields: str = "") -> User:
         """Return info about a user by ID."""
-        from ..types.user import User
         params: dict[str, Any] = {"user_ids": user_id}
         if fields:
             params["fields"] = fields
