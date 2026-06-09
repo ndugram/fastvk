@@ -1,41 +1,34 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 if TYPE_CHECKING:
     from ..api.client import Bot
     from ..keyboard import Keyboard
 
 
-@dataclass(slots=True)
-class Message:
-    """
-    Incoming VK message.
-
-    ```python
-    @router.message(Command("start"))
-    async def start(message: Message) -> None:
-        await message.answer("Привет!")
-    ```
-    """
+class Message(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
 
     id: int
     date: int
     peer_id: int
     from_id: int
-    text: str
-    attachments: list[dict] = field(default_factory=list)
-    reply_message: dict | None = None
-    fwd_messages: list[dict] = field(default_factory=list)
+    text: str = ""
+    attachments: list[dict[str, Any]] = Field(default_factory=list)
+    reply_message: dict[str, Any] | None = None
+    fwd_messages: list[dict[str, Any]] = Field(default_factory=list)
     payload: str | None = None
-    raw: dict = field(default_factory=dict)
-    _bot: Bot | None = field(default=None, repr=False)
+    raw: dict[str, Any] = Field(default_factory=dict)
+
+    _bot: Bot | None = PrivateAttr(default=None)
 
     @classmethod
-    def from_dict(cls, data: dict, bot: Bot) -> Message:
-        return cls(
+    def from_dict(cls, data: dict[str, Any], bot: Bot) -> Message:
+        obj = cls(
             id=data["id"],
             date=data["date"],
             peer_id=data["peer_id"],
@@ -46,8 +39,9 @@ class Message:
             fwd_messages=data.get("fwd_messages", []),
             payload=data.get("payload"),
             raw=data,
-            _bot=bot,
         )
+        obj._bot = bot
+        return obj
 
     async def answer(
         self,
@@ -56,18 +50,6 @@ class Message:
         keyboard: Keyboard | str | None = None,
         **kwargs: Any,
     ) -> Any:
-        """
-        Send a message to the same conversation.
-
-        ```python
-        await message.answer("Привет!")
-        await message.answer(
-            "Выбери:",
-            keyboard=Keyboard().row(Button.text("Ок", color="primary")),
-        )
-        await message.answer("Убрать кнопки", keyboard=Keyboard.remove())
-        ```
-        """
         assert self._bot is not None
         if keyboard is not None:
             kwargs["keyboard"] = str(keyboard)
@@ -85,7 +67,6 @@ class Message:
         keyboard: Keyboard | str | None = None,
         **kwargs: Any,
     ) -> Any:
-        """Send a reply that quotes this message."""
         assert self._bot is not None
         if keyboard is not None:
             kwargs["keyboard"] = str(keyboard)
@@ -98,7 +79,6 @@ class Message:
         )
 
     async def delete(self, *, delete_for_all: bool = False) -> Any:
-        """Delete this message."""
         assert self._bot is not None
         return await self._bot.messages.delete(
             message_ids=self.id,
