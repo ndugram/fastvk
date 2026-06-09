@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.svg" width="480">
+  <img src="https://raw.githubusercontent.com/ndugram/fastvk/master/docs/logo.svg" width="480">
 </p>
 <p align="center">
     <em>Async VK bot framework with FastAPI-style decorators and aiogram-style FSM.</em>
@@ -510,9 +510,9 @@ bot = FastVK(
 
 Open <a href="http://127.0.0.1:8080" target="_blank">http://127.0.0.1:8080</a> in your browser.
 
-<img src="docs/dashboard-dark.png">
+<img src="https://raw.githubusercontent.com/ndugram/fastvk/master/docs/dashboard-dark.png">
 
-<img src="docs/dashboard-light.png">
+<img src="https://raw.githubusercontent.com/ndugram/fastvk/master/docs/dashboard-light.png">
 
 The dashboard shows:
 
