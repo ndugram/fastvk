@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .app import FastVK
+from .background import BackgroundTasks
 from .router import Router
 from .api.client import Bot
 from .keyboard import Button, Keyboard
@@ -16,7 +17,7 @@ from . import methods
 from . import types
 
 __all__ = [
-    "FastVK", "Router", "Bot",
+    "FastVK", "Router", "Bot", "BackgroundTasks",
     "Button", "Keyboard",
     "CallbackQuery", "Group", "F",
     "Command", "CommandStart", "CommandHelp",
