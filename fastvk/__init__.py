@@ -5,6 +5,7 @@ from .router import Router
 from .api.client import Bot
 from .keyboard import Button, Keyboard
 from .types.callback import CallbackQuery
+from .types.group import Group
 from .filters.magic import F
 from .enums import ChatAction, Color, ParseMode
 from . import enums
@@ -16,7 +17,7 @@ from . import types
 __all__ = [
     "FastVK", "Router", "Bot",
     "Button", "Keyboard",
-    "CallbackQuery", "F",
+    "CallbackQuery", "Group", "F",
     "ChatAction", "Color", "ParseMode",
     "enums", "filters", "fsm", "methods", "types",
 ]
