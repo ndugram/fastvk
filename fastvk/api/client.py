@@ -89,7 +89,8 @@ class Bot:
             "groups.getById",
             fields="description,members_count,screen_name",
         )
-        return Group.from_dict(data[0])
+        groups = data.get("groups", data) if isinstance(data, dict) else data
+        return Group.from_dict(groups[0])
 
     def __getattr__(self, name: str) -> _APIMethod:
         return _APIMethod(self, name)
