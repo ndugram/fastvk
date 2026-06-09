@@ -1,0 +1,12 @@
+include README.md
+include LICENSE
+include CONTRIBUTING.md
+include SECURITY.md
+include CODE_OF_CONDUCT.md
+include MANIFEST.in
+recursive-include fastvk *.py *.pyi py.typed
+recursive-include examples *.py *.md
+recursive-include docs *.md *.svg
+global-exclude *.py[cod] __pycache__ *.so
+global-exclude *.egg-info *.egg
+global-exclude .DS_Store
