@@ -8,6 +8,7 @@ from .types.callback import CallbackQuery
 from .filters.magic import F
 from . import filters
 from . import fsm
+from . import methods
 from . import types
 
-__all__ = ["FastVK", "Router", "Bot", "Button", "CallbackQuery", "F", "Keyboard", "filters", "fsm", "types"]
+__all__ = ["FastVK", "Router", "Bot", "Button", "CallbackQuery", "F", "Keyboard", "filters", "fsm", "methods", "types"]
