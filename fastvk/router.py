@@ -5,20 +5,19 @@ import inspect
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, get_type_hints
+from typing import Any, get_type_hints
 
-logger = logging.getLogger("fastvk")
-
+from .api.client import Bot
 from .background import BackgroundTasks
 from .filters.builtin import _normalize_filter
+from .fsm.context import FSMContext
+from .fsm.storage import BaseStorage
 from .types.callback import CallbackQuery
 from .types.message import Message
 from .types.update import Update
 from .types.user import User
 
-if TYPE_CHECKING:
-    from .api.client import Bot
-    from .fsm.storage import BaseStorage
+logger = logging.getLogger("fastvk")
 
 
 _sig_cache: dict[Callable[..., Any], list[tuple[str, Any]]] = {}
@@ -234,10 +233,7 @@ class Router:
         storage: BaseStorage,
     ) -> bool:
         """Dispatch *update* to the first matching handler. Returns ``True`` if handled."""
-        from .api.client import Bot as _Bot
-        from .fsm.context import FSMContext
-
-        context: dict[type, Any] = {_Bot: bot, Update: update}
+        context: dict[type, Any] = {Bot: bot, Update: update}
 
         if update.type == "message_new":
             msg = Message.from_dict(update.object["message"], bot)
