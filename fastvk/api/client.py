@@ -6,6 +6,7 @@ import aiohttp
 
 from ..__meta__ import _api_base_url_, _api_version_
 from ..exceptions import VKAPIError
+from ..types.group import Group
 
 if TYPE_CHECKING:
     from ..methods.base import VKMethod
@@ -81,6 +82,14 @@ class Bot:
     async def __call__(self, method: VKMethod[_T]) -> _T:
         params = method.model_dump(exclude_none=True)
         return await self._call(method.__api_method__, **params)
+
+    async def get_me(self) -> Group:
+        """Return info about the community this token belongs to."""
+        data = await self._call(
+            "groups.getById",
+            fields="description,members_count,screen_name",
+        )
+        return Group.from_dict(data[0])
 
     def __getattr__(self, name: str) -> _APIMethod:
         return _APIMethod(self, name)
