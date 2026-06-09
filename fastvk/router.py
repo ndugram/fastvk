@@ -18,7 +18,6 @@ from .types.user import User
 
 if TYPE_CHECKING:
     from .api.client import Bot
-    from .fsm.context import FSMContext
     from .fsm.storage import BaseStorage
 
 
