@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 if TYPE_CHECKING:
     from ..api.client import Bot
+    from ..enums.chat_action import ChatAction
     from ..enums.parse_mode import ParseMode
     from ..keyboard import Keyboard
     from .user import User
@@ -168,6 +169,35 @@ class Message(BaseModel):
             peer_id=peer_id if peer_id is not None else self.peer_id,
             forward_messages=self.id,
             random_id=random.randint(0, 2**31),
+        )
+
+    async def edit(
+        self,
+        text: str,
+        *,
+        keyboard: Keyboard | str | None = None,
+        attachment: str | None = None,
+        dont_parse_links: bool = False,
+        disable_mentions: bool = False,
+    ) -> int:
+        """Edit this message."""
+        assert self._bot is not None
+        return await self._bot.messages.edit(
+            peer_id=self.peer_id,
+            message_id=self.id,
+            message=text,
+            keyboard=str(keyboard) if keyboard is not None else None,
+            attachment=attachment,
+            dont_parse_links=int(dont_parse_links) if dont_parse_links else None,
+            disable_mentions=int(disable_mentions) if disable_mentions else None,
+        )
+
+    async def typing(self, action: ChatAction | str = "typing") -> None:
+        """Send a chat action indicator (default: "печатает...")."""
+        assert self._bot is not None
+        await self._bot.messages.setActivity(
+            peer_id=self.peer_id,
+            type=str(action),
         )
 
     async def delete(self, *, delete_for_all: bool = False) -> int:
