@@ -86,6 +86,7 @@ nav:
       - en/tutorial/fsm.md
       - en/tutorial/routers.md
       - en/tutorial/middleware.md
+      - en/tutorial/background-tasks.md
       - en/tutorial/lifespan.md
       - en/tutorial/exceptions.md
     - Reference:
@@ -111,6 +112,7 @@ nav:
       - ru/tutorial/fsm.md
       - ru/tutorial/routers.md
       - ru/tutorial/middleware.md
+      - ru/tutorial/background-tasks.md
       - ru/tutorial/lifespan.md
       - ru/tutorial/exceptions.md
     - Справочник:
