@@ -18,6 +18,7 @@ from .router import Router
 from .types.update import Update
 from .logging import setup_logging
 from .dashboard.server import Dashboard
+from .dashboard.config import BaseDashboard
 from .webhook import WebhookHandler
 
 
@@ -35,18 +36,14 @@ class FastVK(Router):
         storage: BaseStorage | None = None,
         middleware: list[BaseMiddleware] | BaseMiddleware | None = None,
         lifespan: Lifespan | None = None,
-        dashboard: bool = False,
-        dashboard_host: str = "127.0.0.1",
-        dashboard_port: int = 8080,
+        dashboard: BaseDashboard | None = None,
     ) -> None:
         super().__init__()
         self.bot = Bot(token=token)
         self.group_id = group_id
         self.storage: BaseStorage = storage or MemoryStorage()
         self._lifespan: Lifespan | None = lifespan
-        self._dashboard_enabled = dashboard
-        self._dashboard_host = dashboard_host
-        self._dashboard_port = dashboard_port
+        self._dashboard = dashboard
 
         self._stats: dict = {
             "total": 0,
@@ -106,8 +103,8 @@ class FastVK(Router):
             await self.storage.close()
 
     async def _run_polling(self) -> None:
-        if self._dashboard_enabled:
-            dash = Dashboard(self, host=self._dashboard_host, port=self._dashboard_port)
+        if self._dashboard is not None and self._dashboard.config.dashboard:
+            dash = Dashboard(self, host=self._dashboard.config.dashboard_host, port=self._dashboard.config.dashboard_port)
             await dash.start()
 
         if self._lifespan is not None:
@@ -136,8 +133,8 @@ class FastVK(Router):
         self._stats["started_at"] = time.monotonic()
         logger.info("FastVK webhook mode (group_id=%d)  %s:%d%s", self.group_id, host, port, path)
 
-        if self._dashboard_enabled:
-            dash = Dashboard(self, host=self._dashboard_host, port=self._dashboard_port)
+        if self._dashboard is not None and self._dashboard.config.dashboard:
+            dash = Dashboard(self, host=self._dashboard.config.dashboard_host, port=self._dashboard.config.dashboard_port)
             await dash.start()
 
         handler = WebhookHandler(self, confirmation_token=confirmation_token, secret=secret)
