@@ -4,6 +4,7 @@ from typing import Any
 
 from ..fsm.context import FSMContext
 from ..fsm.state import State
+from ..types.command import CommandArgs
 from ..types.message import Message
 
 
@@ -35,11 +36,19 @@ class Command:
         text = message.text.strip()
         for p in self.prefix:
             for cmd in self.commands:
-                if (
-                    text == f"{p}{cmd}"
-                    or text.startswith(f"{p}{cmd} ")
-                    or text.startswith(f"{p}{cmd}@")
-                ):
+                if text == f"{p}{cmd}":
+                    data[CommandArgs] = CommandArgs(command=cmd, args=(), text="")
+                    return True
+                if text.startswith(f"{p}{cmd} ") or text.startswith(f"{p}{cmd}@"):
+                    rest = text[len(p) + len(cmd):]
+                    if rest.startswith("@"):
+                        rest = rest.split(" ", 1)[1] if " " in rest else ""
+                    arg_text = rest.strip()
+                    data[CommandArgs] = CommandArgs(
+                        command=cmd,
+                        args=tuple(arg_text.split()),
+                        text=arg_text,
+                    )
                     return True
         return False
 
