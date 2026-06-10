@@ -27,12 +27,50 @@ class FastVK(Bot):
         *,
         storage: BaseStorage | None = None,
         lifespan: AsyncContextManager | None = None,
-        api_version: str = "5.199",
+        dashboard: BaseDashboard | None = None,
     ) -> None: ...
 
-    def run_polling(self, *, skip_updates: bool = False) -> None:
-        """Блокирующий. Запускает asyncio.run(self.start_polling(...))."""
+    def run_polling(self) -> None:
+        """Блокирующий. Запускает asyncio.run внутри."""
 ```
+
+## DashboardConfig
+
+Датакласс с настройками сервера дашборда.
+
+```python
+@dataclass
+class DashboardConfig:
+    dashboard: bool = True          # включить/выключить
+    dashboard_host: str = "127.0.0.1"
+    dashboard_port: int = 8080
+```
+
+## BaseDashboard
+
+Базовый класс конфигурации дашборда. Создай подкласс и переопредели `config`.
+
+```python
+class BaseDashboard:
+    config: DashboardConfig = DashboardConfig()
+```
+
+**Использование:**
+
+```python
+from fastvk import FastVK
+from fastvk.dashboard import BaseDashboard, DashboardConfig
+
+class MyDashboard(BaseDashboard):
+    config = DashboardConfig(
+        dashboard_host="0.0.0.0",
+        dashboard_port=8080,
+    )
+
+bot = FastVK(token=TOKEN, group_id=GROUP_ID, dashboard=MyDashboard())
+```
+
+`dashboard=None` (по умолчанию) — дашборд отключён.
 
 ## Bot
 
