@@ -7,6 +7,7 @@ from fastvk.filters.magic import F
 from fastvk.fsm.context import FSMContext
 from fastvk.fsm.state import State, StatesGroup
 from fastvk.fsm.storage import MemoryStorage
+from fastvk.types.command import CommandArgs
 
 
 class _FakeMsg:
@@ -59,6 +60,78 @@ class TestCommand:
     def test_repr(self) -> None:
         f = Command("start")
         assert "Command" in repr(f)
+
+
+class TestCommandArgs:
+    def test_injects_args_into_data(self) -> None:
+        f = Command("ban")
+        data: dict = {}
+        f(_FakeMsg("/ban 123 спам"), data)
+        assert CommandArgs in data
+        assert data[CommandArgs].args == ("123", "спам")
+
+    def test_injects_empty_args_for_bare_command(self) -> None:
+        f = Command("start")
+        data: dict = {}
+        f(_FakeMsg("/start"), data)
+        assert data[CommandArgs].args == ()
+        assert data[CommandArgs].text == ""
+
+    def test_text_preserves_full_arg_string(self) -> None:
+        f = Command("say")
+        data: dict = {}
+        f(_FakeMsg("/say hello world"), data)
+        assert data[CommandArgs].text == "hello world"
+
+    def test_command_name_stored(self) -> None:
+        f = Command("ping")
+        data: dict = {}
+        f(_FakeMsg("/ping"), data)
+        assert data[CommandArgs].command == "ping"
+
+    def test_strips_botname_mention(self) -> None:
+        f = Command("start")
+        data: dict = {}
+        f(_FakeMsg("/start@mybot arg1"), data)
+        assert data[CommandArgs].args == ("arg1",)
+
+    def test_mention_no_args(self) -> None:
+        f = Command("start")
+        data: dict = {}
+        f(_FakeMsg("/start@mybot"), data)
+        assert data[CommandArgs].args == ()
+        assert data[CommandArgs].text == ""
+
+    def test_getitem(self) -> None:
+        ca = CommandArgs(command="ban", args=("123", "спам"), text="123 спам")
+        assert ca[0] == "123"
+        assert ca[1] == "спам"
+
+    def test_len(self) -> None:
+        ca = CommandArgs(command="ban", args=("a", "b", "c"), text="a b c")
+        assert len(ca) == 3
+
+    def test_bool_true(self) -> None:
+        ca = CommandArgs(command="ban", args=("123",), text="123")
+        assert bool(ca) is True
+
+    def test_bool_false(self) -> None:
+        ca = CommandArgs(command="start", args=(), text="")
+        assert bool(ca) is False
+
+    def test_get_existing(self) -> None:
+        ca = CommandArgs(command="ban", args=("123",), text="123")
+        assert ca.get(0) == "123"
+
+    def test_get_missing_returns_default(self) -> None:
+        ca = CommandArgs(command="ban", args=("123",), text="123")
+        assert ca.get(5, "default") == "default"
+
+    def test_no_injection_on_no_match(self) -> None:
+        f = Command("start")
+        data: dict = {}
+        f(_FakeMsg("/help"), data)
+        assert CommandArgs not in data
 
 
 class TestText:

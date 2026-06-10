@@ -15,6 +15,35 @@ Command("ban", prefix="/!")               # совпадает с /ban и !ban
 Command("buy", prefix="/")               # совпадает с /buy
 ```
 
+### CommandArgs
+
+`CommandArgs` инжектируется DI-системой автоматически, когда фильтр `Command` совпадает. Объяви его как параметр хэндлера — получишь распарсенные аргументы.
+
+```python
+from fastvk.filters import Command, CommandArgs
+
+@router.message(Command("ban"))
+async def ban(message: Message, args: CommandArgs) -> None:
+    user_id = args[0]              # первый аргумент
+    reason  = args.get(1, "-")    # второй или дефолт
+    await message.answer(f"ban {user_id}: {reason}")
+```
+
+| Атрибут | Тип | Описание |
+|---------|-----|----------|
+| `command` | `str` | Имя команды без префикса |
+| `args` | `tuple[str, ...]` | Аргументы, разбитые по пробелу |
+| `text` | `str` | Сырая строка аргументов после команды |
+
+| Метод / оператор | Описание |
+|------------------|----------|
+| `args[n]` | n-й аргумент (бросает `IndexError` если нет) |
+| `args.get(n, default="")` | n-й аргумент с запасным значением |
+| `len(args)` | Количество аргументов |
+| `bool(args)` | `False` если аргументов нет |
+
+`/ban@botname 123 спам` → `command="ban"`, `args=("123", "спам")`, `text="123 спам"`
+
 ### CommandStart / CommandHelp
 
 ```python
