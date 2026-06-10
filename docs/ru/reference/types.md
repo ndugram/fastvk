@@ -100,6 +100,75 @@ await callback.answer(text=None, *, event_data=None) -> None
 
 Отправляет snackbar уведомление пользователю (или очищает его если `text=None`).
 
+## GroupJoinEvent
+
+Типизированный объект, внедряемый в хендлеры `@router.group_join()`.
+
+```python
+from fastvk.types import GroupJoinEvent
+```
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `user_id` | `int` | ID пользователя, вступившего в группу |
+| `join_type` | `str` | `"join"`, `"invite"`, `"request"`, `"approved"`, `"link"`, `"unsure"`, `"accepted"` |
+
+```python
+@bot.group_join()
+async def on_join(event: GroupJoinEvent, user: User) -> None:
+    print(event.join_type)  # "invite"
+```
+
+## GroupLeaveEvent
+
+Типизированный объект, внедряемый в хендлеры `@router.group_leave()`.
+
+```python
+from fastvk.types import GroupLeaveEvent
+```
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `user_id` | `int` | ID пользователя, покинувшего группу |
+| `is_self` | `bool` | `True` — вышел сам; `False` — был исключён |
+
+```python
+@bot.group_leave()
+async def on_leave(event: GroupLeaveEvent) -> None:
+    action = "сам покинул" if event.is_self else "был исключён из"
+    print(f"Пользователь {event.user_id} {action} группы.")
+```
+
+## WallPostEvent
+
+Типизированный объект, внедряемый в хендлеры `@router.wall_post_new()`.
+
+```python
+from fastvk.types import WallPostEvent
+```
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | `int` | ID поста |
+| `owner_id` | `int` | ID владельца (отрицательный = сообщество) |
+| `from_id` | `int` | ID автора |
+| `date` | `int` | Unix timestamp |
+| `text` | `str` | Текст поста |
+| `post_type` | `str` | `"post"`, `"copy"`, `"reply"`, `"postpone"`, `"suggest"` |
+| `attachments` | `list[dict]` | Сырые словари вложений |
+| `raw` | `dict` | Полный оригинальный объект |
+
+```python
+@bot.wall_post_new()
+async def on_post(event: WallPostEvent, user: User | None = None) -> None:
+    author = user.full_name if user else f"id{event.from_id}"
+    print(f"Новый пост #{event.id} от {author}: {event.text[:80]!r}")
+```
+
+!!! note "Внедрение User"
+    `User` автоматически внедряется для `group_join` и `group_leave` (всегда положительный `user_id`).
+    Для `wall_post_new` — только когда `from_id > 0` (реальный пользователь, не сообщество).
+
 ## Update
 
 Внутренний тип передаваемый диспетчеру.
