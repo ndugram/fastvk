@@ -100,6 +100,75 @@ await callback.answer(text=None, *, event_data=None) -> None
 
 Sends a snackbar notification to the user (or clears it if `text=None`).
 
+## GroupJoinEvent
+
+Typed object injected into handlers registered with `@router.group_join()`.
+
+```python
+from fastvk.types import GroupJoinEvent
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `user_id` | `int` | ID of the user who joined |
+| `join_type` | `str` | `"join"`, `"invite"`, `"request"`, `"approved"`, `"link"`, `"unsure"`, `"accepted"` |
+
+```python
+@bot.group_join()
+async def on_join(event: GroupJoinEvent, user: User) -> None:
+    print(event.join_type)  # "invite"
+```
+
+## GroupLeaveEvent
+
+Typed object injected into handlers registered with `@router.group_leave()`.
+
+```python
+from fastvk.types import GroupLeaveEvent
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `user_id` | `int` | ID of the user who left |
+| `is_self` | `bool` | `True` — left on their own; `False` — was kicked |
+
+```python
+@bot.group_leave()
+async def on_leave(event: GroupLeaveEvent) -> None:
+    action = "left" if event.is_self else "was kicked"
+    print(f"User {event.user_id} {action}.")
+```
+
+## WallPostEvent
+
+Typed object injected into handlers registered with `@router.wall_post_new()`.
+
+```python
+from fastvk.types import WallPostEvent
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `int` | Post ID |
+| `owner_id` | `int` | Owner ID (negative = community) |
+| `from_id` | `int` | Author ID |
+| `date` | `int` | Unix timestamp |
+| `text` | `str` | Post text |
+| `post_type` | `str` | `"post"`, `"copy"`, `"reply"`, `"postpone"`, `"suggest"` |
+| `attachments` | `list[dict]` | Raw attachment dicts |
+| `raw` | `dict` | Full original object |
+
+```python
+@bot.wall_post_new()
+async def on_post(event: WallPostEvent, user: User | None = None) -> None:
+    author = user.full_name if user else f"id{event.from_id}"
+    print(f"New post #{event.id} by {author}: {event.text[:80]!r}")
+```
+
+!!! note "User injection"
+    `User` is injected automatically for `group_join` and `group_leave` (always positive `user_id`).
+    For `wall_post_new` it is injected only when `from_id > 0` (real user, not community).
+
 ## Update
 
 Internal type passed to the dispatcher.
