@@ -81,6 +81,7 @@ nav:
       - en/tutorial/first-steps.md
       - en/tutorial/handlers.md
       - en/tutorial/filters.md
+      - en/tutorial/command-args.md
       - en/tutorial/message.md
       - en/tutorial/keyboard.md
       - en/tutorial/fsm.md
@@ -110,6 +111,7 @@ nav:
       - ru/tutorial/first-steps.md
       - ru/tutorial/handlers.md
       - ru/tutorial/filters.md
+      - ru/tutorial/command-args.md
       - ru/tutorial/message.md
       - ru/tutorial/keyboard.md
       - ru/tutorial/fsm.md
