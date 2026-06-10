@@ -496,15 +496,22 @@ async def on_photo(update: Update) -> None:
 
 ## Dashboard
 
-Enable the real-time monitoring dashboard by passing `dashboard=True`:
+Enable the real-time monitoring dashboard by passing a `BaseDashboard` instance:
 
 ```python
+from fastvk import FastVK
+from fastvk.dashboard import BaseDashboard, DashboardConfig
+
+class MyDashboard(BaseDashboard):
+    config = DashboardConfig(
+        dashboard_host="127.0.0.1",
+        dashboard_port=8080,
+    )
+
 bot = FastVK(
     token="vk1.a.YOUR_TOKEN",
     group_id=123456789,
-    dashboard=True,
-    dashboard_host="127.0.0.1",
-    dashboard_port=8080,
+    dashboard=MyDashboard(),
 )
 ```
 
