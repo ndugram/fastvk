@@ -91,6 +91,7 @@ nav:
       - en/tutorial/exceptions.md
       - en/tutorial/sqlite-storage.md
       - en/tutorial/webhook.md
+      - en/tutorial/dashboard.md
     - Reference:
       - en/reference/index.md
       - en/reference/fastvk.md
@@ -119,6 +120,7 @@ nav:
       - ru/tutorial/exceptions.md
       - ru/tutorial/sqlite-storage.md
       - ru/tutorial/webhook.md
+      - ru/tutorial/dashboard.md
     - Справочник:
       - ru/reference/index.md
       - ru/reference/fastvk.md
