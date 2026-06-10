@@ -1,16 +1,27 @@
 """
 Dashboard example — bot info + live stats at http://localhost:8080
+
+Define a BaseDashboard subclass with DashboardConfig, pass instance to FastVK.
 """
 from fastvk import FastVK, Router
+from fastvk.dashboard import BaseDashboard, DashboardConfig
 from fastvk.types import Message
 
-BOT_TOKEN=""
+BOT_TOKEN = ""
 GROUP_ID = 1234567
+
+
+class MyDashboard(BaseDashboard):
+    config = DashboardConfig(
+        dashboard_host="127.0.0.1",
+        dashboard_port=8080,
+    )
+
 
 bot = FastVK(
     token=BOT_TOKEN,
     group_id=GROUP_ID,
-    dashboard=True,
+    dashboard=MyDashboard(),
 )
 
 router = Router()
