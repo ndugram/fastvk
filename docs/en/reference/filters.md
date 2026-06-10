@@ -15,6 +15,35 @@ Command("ban", prefix="/!")               # matches /ban and !ban
 Command("buy", prefix="/")               # matches /buy
 ```
 
+### CommandArgs
+
+`CommandArgs` is injected automatically by the DI system when a `Command` filter matches. Declare it as a handler parameter to receive parsed arguments.
+
+```python
+from fastvk.filters import Command, CommandArgs
+
+@router.message(Command("ban"))
+async def ban(message: Message, args: CommandArgs) -> None:
+    user_id = args[0]              # first arg
+    reason  = args.get(1, "-")    # second arg or default
+    await message.answer(f"ban {user_id}: {reason}")
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `command` | `str` | Matched command name without prefix |
+| `args` | `tuple[str, ...]` | Whitespace-split arguments |
+| `text` | `str` | Raw argument string after the command |
+
+| Method / operator | Description |
+|-------------------|-------------|
+| `args[n]` | Get n-th argument (raises `IndexError` if missing) |
+| `args.get(n, default="")` | Get n-th argument with fallback |
+| `len(args)` | Number of arguments |
+| `bool(args)` | `False` if no arguments |
+
+`/ban@botname 123 spam` → `command="ban"`, `args=("123", "spam")`, `text="123 spam"`
+
 ### CommandStart / CommandHelp
 
 ```python
