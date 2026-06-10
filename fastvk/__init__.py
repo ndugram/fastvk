@@ -15,6 +15,7 @@ from . import filters
 from . import fsm
 from . import methods
 from . import types
+from . import dashboard
 from .logging import setup_logging
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     "Command", "CommandStart", "CommandHelp",
     "ChatAction", "Color", "ParseMode",
     "enums", "filters", "fsm", "methods", "types",
+    "dashboard",
     "setup_logging",
 ]
