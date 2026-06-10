@@ -13,6 +13,7 @@ from .filters.builtin import _normalize_filter
 from .fsm.context import FSMContext
 from .fsm.storage import BaseStorage
 from .types.callback import CallbackQuery
+from .types.events import GroupJoinEvent, GroupLeaveEvent, WallPostEvent
 from .types.message import Message
 from .types.update import Update
 from .types.user import User
@@ -253,6 +254,34 @@ class Router:
             context[User] = user
             context[FSMContext] = FSMContext(storage, cb.peer_id, cb.user_id)
             event_obj = cb
+        elif update.type == "group_join":
+            evt = GroupJoinEvent.from_dict(update.object)
+            context[GroupJoinEvent] = evt
+            try:
+                raw_user = await bot.users.get(user_ids=evt.user_id)
+                context[User] = User.from_dict(raw_user[0])
+            except Exception:
+                pass
+            event_obj = evt
+        elif update.type == "group_leave":
+            evt = GroupLeaveEvent.from_dict(update.object)
+            context[GroupLeaveEvent] = evt
+            try:
+                raw_user = await bot.users.get(user_ids=evt.user_id)
+                context[User] = User.from_dict(raw_user[0])
+            except Exception:
+                pass
+            event_obj = evt
+        elif update.type == "wall_post_new":
+            evt = WallPostEvent.from_dict(update.object)
+            context[WallPostEvent] = evt
+            if evt.from_id > 0:
+                try:
+                    raw_user = await bot.users.get(user_ids=evt.from_id)
+                    context[User] = User.from_dict(raw_user[0])
+                except Exception:
+                    pass
+            event_obj = evt
         else:
             event_obj = update.object
 
