@@ -23,7 +23,7 @@ class FastVK(Bot):
     def __init__(
         self,
         token: str,
-        group_id: int,
+        group_id: int | None = None,
         *,
         storage: BaseStorage | None = None,
         lifespan: AsyncContextManager | None = None,
@@ -37,6 +37,7 @@ class FastVK(Bot):
 
 | Параметр | По умолчанию | Описание |
 |---|---|---|
+| `group_id` | `None` | ID группы. Если не передан — определяется автоматически из токена через `groups.getById` при старте. |
 | `throttle_rate` | `1.0` | Минимальный интервал между сообщениями от одного пользователя (секунды). Передай `0` чтобы отключить. |
 
 ## ThrottlingMiddleware
