@@ -32,7 +32,7 @@ class FastVK(Router):
     def __init__(
         self,
         token: str,
-        group_id: int,
+        group_id: int | None = None,
         *,
         storage: BaseStorage | None = None,
         middleware: list[BaseMiddleware] | BaseMiddleware | None = None,
@@ -42,7 +42,7 @@ class FastVK(Router):
     ) -> None:
         super().__init__()
         self.bot = Bot(token=token)
-        self.group_id = group_id
+        self.group_id: int = group_id or 0
         self.storage: BaseStorage = storage or MemoryStorage()
         self._lifespan: Lifespan | None = lifespan
         self._dashboard = dashboard
@@ -94,7 +94,14 @@ class FastVK(Router):
             self._stats["errors"] += 1
             raise
 
+    async def _resolve_group_id(self) -> None:
+        if not self.group_id:
+            group = await self.bot.get_me()
+            self.group_id = group.id
+            logger.debug("Resolved group_id=%d from token", self.group_id)
+
     async def _poll(self) -> None:
+        await self._resolve_group_id()
         self._stats["started_at"] = time.monotonic()
         logger.info("FastVK started (group_id=%d)", self.group_id)
         poller = LongPoller(api=self.bot, group_id=self.group_id)
@@ -135,6 +142,7 @@ class FastVK(Router):
         path: str,
         secret: str | None,
     ) -> None:
+        await self._resolve_group_id()
         self._stats["started_at"] = time.monotonic()
         logger.info("FastVK webhook mode (group_id=%d)  %s:%d%s", self.group_id, host, port, path)
 
