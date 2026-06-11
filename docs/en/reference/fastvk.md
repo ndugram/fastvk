@@ -28,10 +28,38 @@ class FastVK(Bot):
         storage: BaseStorage | None = None,
         lifespan: AsyncContextManager | None = None,
         dashboard: BaseDashboard | None = None,
+        throttle_rate: float = 1.0,
     ) -> None: ...
 
     def run_polling(self) -> None:
         """Blocking. Runs asyncio.run internally."""
+```
+
+| Parameter | Default | Description |
+|---|---|---|
+| `throttle_rate` | `1.0` | Minimum seconds between messages from the same user. Pass `0` to disable. |
+
+## ThrottlingMiddleware
+
+Built-in rate limiter, registered automatically by `FastVK`. No configuration needed.
+
+```python
+# default — 1 message per second per user
+bot = FastVK(token=TOKEN, group_id=GROUP_ID)
+
+# custom rate
+bot = FastVK(token=TOKEN, group_id=GROUP_ID, throttle_rate=0.5)
+
+# disabled
+bot = FastVK(token=TOKEN, group_id=GROUP_ID, throttle_rate=0)
+```
+
+When a user sends messages faster than `throttle_rate` seconds apart, the extra updates are silently dropped — the handler is never called. Works across all event types (`message_new`, `message_event`, `group_join`, `group_leave`). Community posts (`wall_post_new` with negative `from_id`) are never throttled.
+
+If you need the class directly (e.g. to compose with your own middleware chain):
+
+```python
+from fastvk.middleware import ThrottlingMiddleware
 ```
 
 ## DashboardConfig
