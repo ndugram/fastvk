@@ -13,6 +13,7 @@ from .api.client import Bot
 from .types.group import Group
 from .fsm.storage import BaseStorage, MemoryStorage
 from .middleware.base import BaseMiddleware, MiddlewareManager
+from .middleware.throttling import ThrottlingMiddleware
 from .polling.longpoll import LongPoller
 from .router import Router
 from .types.update import Update
@@ -37,6 +38,7 @@ class FastVK(Router):
         middleware: list[BaseMiddleware] | BaseMiddleware | None = None,
         lifespan: Lifespan | None = None,
         dashboard: BaseDashboard | None = None,
+        throttle_rate: float = 1.0,
     ) -> None:
         super().__init__()
         self.bot = Bot(token=token)
@@ -60,6 +62,9 @@ class FastVK(Router):
             _mw = middleware
         else:
             _mw = [middleware]
+
+        if throttle_rate > 0:
+            _mw = [ThrottlingMiddleware(rate=throttle_rate), *_mw]
         self.middleware_manager = MiddlewareManager(_mw)
 
     async def get_me(self) -> Group:

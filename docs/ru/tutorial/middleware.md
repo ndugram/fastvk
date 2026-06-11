@@ -60,26 +60,20 @@ async def handler(message: Message, db) -> None:
     rows = await db.fetch("SELECT 1")
 ```
 
-## Пример rate limiting
+## Встроенный троттлинг
+
+`FastVK` поставляется с `ThrottlingMiddleware`, который **регистрируется автоматически** — ничего настраивать не нужно.
+По умолчанию пропускает 1 сообщение в секунду на пользователя. Лишние молча дропаются.
 
 ```python
-import time
-from collections import defaultdict
+# по умолчанию: 1 сообщение/с на пользователя
+bot = FastVK(token=TOKEN, group_id=GROUP_ID)
 
-class RateLimitMiddleware(BaseMiddleware[Message]):
-    def __init__(self, limit: int = 5, window: int = 10) -> None:
-        self._counts: dict[int, list[float]] = defaultdict(list)
-        self._limit = limit
-        self._window = window
+# другой rate
+bot = FastVK(token=TOKEN, group_id=GROUP_ID, throttle_rate=0.5)
 
-    async def __call__(self, call_next, event: Message, data: dict) -> None:
-        now = time.monotonic()
-        user_id = event.from_id
-        times = [t for t in self._counts[user_id] if now - t < self._window]
-        self._counts[user_id] = times
-        if len(times) >= self._limit:
-            await event.answer("Слишком много запросов. Подожди.")
-            return
-        self._counts[user_id].append(now)
-        await call_next(event, data)
+# отключить
+bot = FastVK(token=TOKEN, group_id=GROUP_ID, throttle_rate=0)
 ```
+
+Подробнее: [справочник ThrottlingMiddleware](../reference/fastvk.md#throttlingmiddleware).
