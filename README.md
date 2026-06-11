@@ -76,7 +76,7 @@ from fastvk import FastVK
 from fastvk.filters import Command
 from fastvk.types import Message
 
-bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
 
 
 @bot.message(Command("start"))
@@ -118,7 +118,7 @@ from fastvk.filters import Command, StateFilter
 from fastvk.fsm import FSMContext, State, StatesGroup
 from fastvk.types import Message
 
-bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
 
 
 class Form(StatesGroup):
@@ -163,7 +163,6 @@ from fastvk.fsm import SQLiteStorage
 
 bot = FastVK(
     token="vk1.a.YOUR_TOKEN",
-    group_id=123456789,
     storage=SQLiteStorage("bot.db"),
 )
 ```
@@ -200,7 +199,7 @@ from fastvk.keyboard import Button, Keyboard
 from fastvk.enums import Color
 from fastvk.types import Message
 
-bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
 
 
 @bot.message(Command("menu"))
@@ -238,7 +237,7 @@ from fastvk.filters import Command
 from fastvk.keyboard import Button, Keyboard
 from fastvk.types import CallbackQuery, Message
 
-bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
 
 
 @bot.message(Command("vote"))
@@ -290,7 +289,7 @@ async def price_mention(message: Message) -> None:
 from fastvk import FastVK
 from shop import router
 
-bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
 bot.include_router(router)
 
 if __name__ == "__main__":
@@ -329,7 +328,6 @@ class LoggingMiddleware(BaseMiddleware):
 
 bot = FastVK(
     token="vk1.a.YOUR_TOKEN",
-    group_id=123456789,
     middleware=[LoggingMiddleware()],
 )
 ```
@@ -347,7 +345,7 @@ from fastvk.exceptions import VKAPIError
 from fastvk.filters import Command
 from fastvk.types import Message
 
-bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
 
 
 @bot.message(Command("risky"))
@@ -381,7 +379,7 @@ from fastvk import FastVK
 from fastvk.filters import Command
 from fastvk.types import Message
 
-bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
 
 
 @bot.message(Command("start"))
@@ -412,7 +410,7 @@ from fastvk.filters import Command, FromUser, IsChat, Text
 from fastvk.types import Message
 
 ADMIN_ID = 123456789
-bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=987654321)
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
 
 
 @bot.message(Command("ban"), FromUser(ADMIN_ID))
@@ -446,7 +444,7 @@ from fastvk import Bot, FastVK
 from fastvk.filters import Command
 from fastvk.types import Message
 
-bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
 
 
 @bot.message(Command("me"))
@@ -471,20 +469,29 @@ Handle any VK event type — not just messages:
 
 ```python
 from fastvk import Bot, FastVK
-from fastvk.types import Update
+from fastvk.types import GroupJoinEvent, GroupLeaveEvent, Update, User, WallPostEvent
 
-bot = FastVK(token="vk1.a.YOUR_TOKEN", group_id=123456789)
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
 
 
 @bot.group_join()
-async def on_join(event: dict, bot: Bot) -> None:
-    user_id = event.get("user_id")
-    await bot.messages.send(peer_id=user_id, message="Добро пожаловать!", random_id=0)
+async def on_join(event: GroupJoinEvent, user: User, bot: Bot) -> None:
+    await bot.messages.send(
+        peer_id=event.user_id,
+        message=f"Добро пожаловать, {user.first_name}!",
+        random_id=0,
+    )
+
+
+@bot.group_leave()
+async def on_leave(event: GroupLeaveEvent) -> None:
+    action = "сам покинул" if event.is_self else "был исключён из"
+    print(f"Пользователь {event.user_id} {action} группы.")
 
 
 @bot.wall_post_new()
-async def on_new_post(event: dict) -> None:
-    print(f"Новый пост: {event.get('id')}")
+async def on_new_post(event: WallPostEvent) -> None:
+    print(f"Новый пост #{event.id}: {event.text[:80]!r}")
 
 
 @bot.on("photo_new")
@@ -510,7 +517,6 @@ class MyDashboard(BaseDashboard):
 
 bot = FastVK(
     token="vk1.a.YOUR_TOKEN",
-    group_id=123456789,
     dashboard=MyDashboard(),
 )
 ```
