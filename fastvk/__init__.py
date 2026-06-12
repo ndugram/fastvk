@@ -10,6 +10,7 @@ from .types.group import Group
 from .filters.magic import F
 from .filters.builtin import Command, CommandHelp, CommandStart
 from .enums import ChatAction, Color, ParseMode
+from .upload import Uploader
 from . import enums
 from . import filters
 from . import fsm
@@ -24,6 +25,7 @@ __all__ = [
     "CallbackQuery", "Group", "F",
     "Command", "CommandStart", "CommandHelp",
     "ChatAction", "Color", "ParseMode",
+    "Uploader",
     "enums", "filters", "fsm", "methods", "types",
     "dashboard",
     "setup_logging",
