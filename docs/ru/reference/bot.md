@@ -51,6 +51,45 @@ async def get_me(self) -> Group
 
 Вернуть информацию о сообществе бота (вызывает `groups.getById`).
 
+### collect
+
+```python
+async def collect(
+    method_class: type[VKMethod],
+    *,
+    max_total: int = 0,
+    items_key: str | None = None,
+    count: int = 100,
+    offset: int = 0,
+    **kwargs,
+) -> list[Any]
+```
+
+Автоматически проходит по всем страницам пагинированного VK API метода.
+
+Принимает типизированный класс метода — полный автокомплит в IDE.
+
+```python
+from fastvk.methods import GroupsGetMembers, WallGet, MessagesGetHistory
+
+# Все участники группы (авто-пагинация)
+members = await bot.collect(GroupsGetMembers, group_id=123, fields="photo_200")
+
+# Последние посты (максимум 500)
+posts = await bot.collect(WallGet, owner_id=-123, count=100, max_total=500)
+
+# История чата
+history = await bot.collect(MessagesGetHistory, peer_id=2000000001)
+```
+
+| Параметр | По умолч. | Описание |
+|----------|-----------|----------|
+| `method_class` | — | Типизированный класс VK метода (например `GroupsGetMembers`) |
+| `max_total` | `0` | Ограничить количество (`0` = без лимита) |
+| `items_key` | авто | Ключ ответа со списком элементов (автоопределение) |
+| `count` | `100` | Элементов на страницу |
+| `offset` | `0` | Начальное смещение |
+
 ### get_user
 
 ```python
