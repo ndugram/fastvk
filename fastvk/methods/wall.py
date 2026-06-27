@@ -17,6 +17,21 @@ class WallPost(VKMethod[dict]):
     publish_date: int | None = None
 
 
+class WallGet(VKMethod[dict]):
+    """Get wall posts. Supports pagination via ``count`` / ``offset``."""
+
+    __returning__ = dict
+    __api_method__ = "wall.get"
+
+    owner_id: int | None = None
+    domain: str | None = None
+    offset: int = 0
+    count: int = 20
+    filter: str | None = None
+    extended: int = 0
+    fields: str | None = None
+
+
 class WallGetById(VKMethod[list]):
     """Get wall posts by IDs. ``posts`` — comma-separated ``owner_id_post_id`` list."""
 
