@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
+from pydantic import ValidationError
+
+from ..callback_data import CallbackData
 from ..fsm.context import FSMContext
 from ..fsm.state import State
+from ..types.callback import CallbackQuery
 from ..types.command import CommandArgs
 from ..types.message import Message
 
@@ -40,7 +45,7 @@ class Command:
                     data[CommandArgs] = CommandArgs(command=cmd, args=(), text="")
                     return True
                 if text.startswith(f"{p}{cmd} ") or text.startswith(f"{p}{cmd}@"):
-                    rest = text[len(p) + len(cmd):]
+                    rest = text[len(p) + len(cmd) :]
                     if rest.startswith("@"):
                         rest = rest.split(" ", 1)[1] if " " in rest else ""
                     arg_text = rest.strip()
@@ -198,6 +203,43 @@ class IsChat:
 
     def __repr__(self) -> str:
         return f"IsChat({set(self.types)!r})"
+
+
+class CallbackDataFilter:
+    """
+    Filter that matches callbacks by :class:`~fastvk.CallbackData` type.
+
+    Automatically unpacks the payload and injects the typed object
+    into the handler via dependency injection.
+
+    Usage:
+        class BuyCallback(CallbackData):
+            prefix: ClassVar[str] = "buy"
+            item_id: int
+
+        @bot.callback(CallbackDataFilter(BuyCallback))
+        async def on_buy(
+            callback: CallbackQuery,
+            callback_data: BuyCallback,   # injected automatically
+        ) -> None:
+            await callback.answer(f"Item #{callback_data.item_id}")
+    """
+
+    def __init__(self, callback_data_cls: type[CallbackData]) -> None:
+        self._callback_data_cls = callback_data_cls
+
+    def __call__(self, event: Any, context: dict) -> bool:
+        if not isinstance(event, CallbackQuery):
+            return False
+        try:
+            cb = self._callback_data_cls.unpack(event.payload)
+        except (ValidationError, TypeError, json.JSONDecodeError):
+            return False
+        context[self._callback_data_cls] = cb
+        return True
+
+    def __repr__(self) -> str:
+        return f"CallbackDataFilter({self._callback_data_cls.__name__})"
 
 
 def _normalize_filter(f: Any) -> Any:
