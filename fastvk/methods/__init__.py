@@ -17,7 +17,7 @@ from .messages import (
 )
 from .photos import PhotosGetMessagesUploadServer, PhotosSaveMessagesPhoto
 from .users import UsersGet, UsersSearch
-from .wall import WallGetById, WallPost
+from .wall import WallGet, WallGetById, WallPost
 
 # registry: VK method string → typed VKMethod class
 # used by _APICallable to route dynamic calls through Pydantic
@@ -43,6 +43,7 @@ _REGISTRY: dict[str, type[VKMethod]] = {
     "groups.getMembers": GroupsGetMembers,
     # wall
     "wall.post": WallPost,
+    "wall.get": WallGet,
     "wall.getById": WallGetById,
     # photos
     "photos.getMessagesUploadServer": PhotosGetMessagesUploadServer,
@@ -77,6 +78,7 @@ __all__ = [
     "GroupsGetMembers",
     # wall
     "WallPost",
+    "WallGet",
     "WallGetById",
     # photos
     "PhotosGetMessagesUploadServer",
