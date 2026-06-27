@@ -102,6 +102,53 @@ async def slow_reply(message: Message) -> None:
 await message.mark_as_read()
 ```
 
+## Поиск по чату
+
+```python
+@bot.message(Command("find"))
+async def find_messages(message: Message) -> None:
+    result = await message.search(q="привет", count=5)
+    await message.answer(f"Найдено {result['count']} сообщений")
+```
+
+## История чата
+
+```python
+@bot.message(Command("recent"))
+async def recent_messages(message: Message) -> None:
+    history = await message.get_history(count=10)
+    items = history.get("items", [])
+    texts = [m.get("text", "")[:50] for m in items]
+    await message.answer("\n".join(texts) if texts else "Нет сообщений")
+```
+
+## Пригласительная ссылка
+
+```python
+@bot.message(Command("invite"))
+async def invite(message: Message) -> None:
+    link = await message.get_invite_link()
+    await message.answer(f"Ссылка: {link}")
+```
+
+## Участники беседы
+
+```python
+@bot.message(Command("members"))
+async def members(message: Message) -> None:
+    data = await message.get_conversation_members()
+    count = data.get("count", 0)
+    await message.answer(f"Участников: {count}")
+```
+
+## Закладка / восстановление
+
+```python
+await message.mark_as_important()                       # добавить в закладки
+await message.restore()                                  # восстановить удалённое
+await message.get_by_conversation_message_id()           # получить по локальному ID
+```
+
 ## Свойства сообщения
 
 ```python
