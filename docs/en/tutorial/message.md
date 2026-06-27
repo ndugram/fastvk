@@ -102,6 +102,53 @@ Available actions: `TYPING`, `AUDIO_MESSAGE`, `PHOTO`, `VIDEO`, `FILE`.
 await message.mark_as_read()
 ```
 
+## Search conversation
+
+```python
+@bot.message(Command("find"))
+async def find_messages(message: Message) -> None:
+    result = await message.search(q="hello", count=5)
+    await message.answer(f"Found {result['count']} messages")
+```
+
+## Get history
+
+```python
+@bot.message(Command("recent"))
+async def recent_messages(message: Message) -> None:
+    history = await message.get_history(count=10)
+    items = history.get("items", [])
+    texts = [m.get("text", "")[:50] for m in items]
+    await message.answer("\n".join(texts) if texts else "No messages")
+```
+
+## Invite link
+
+```python
+@bot.message(Command("invite"))
+async def invite(message: Message) -> None:
+    link = await message.get_invite_link()
+    await message.answer(f"Invite link: {link}")
+```
+
+## Conversation members
+
+```python
+@bot.message(Command("members"))
+async def members(message: Message) -> None:
+    data = await message.get_conversation_members()
+    count = data.get("count", 0)
+    await message.answer(f"Members: {count}")
+```
+
+## Bookmark / restore
+
+```python
+await message.mark_as_important()          # bookmark this message
+await message.restore()                     # restore if deleted
+await message.get_by_conversation_message_id()  # get by local ID
+```
+
 ## Message properties
 
 ```python

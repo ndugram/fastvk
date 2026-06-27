@@ -9,8 +9,13 @@ from contextlib import AbstractAsyncContextManager
 from aiohttp import web
 
 
+from typing import TYPE_CHECKING
+
 from .api.client import Bot
 from .types.group import Group
+
+if TYPE_CHECKING:
+    from .api.client import _APIMethod
 from .fsm.storage import BaseStorage, MemoryStorage
 from .middleware.base import BaseMiddleware, MiddlewareManager
 from .middleware.throttling import ThrottlingMiddleware
@@ -68,6 +73,36 @@ class FastVK(Router):
         if throttle_rate > 0:
             _mw = [ThrottlingMiddleware(rate=throttle_rate), *_mw]
         self.middleware_manager = MiddlewareManager(_mw)
+
+    @property
+    def messages(self) -> _APIMethod:
+        """VK API methods namespace: send, edit, delete, etc."""
+        return self.bot.messages
+
+    @property
+    def users(self) -> _APIMethod:
+        """VK API methods namespace: get, search."""
+        return self.bot.users
+
+    @property
+    def groups(self) -> _APIMethod:
+        """VK API methods namespace: getById, getMembers, etc."""
+        return self.bot.groups
+
+    @property
+    def wall(self) -> _APIMethod:
+        """VK API methods namespace: get, post, getById."""
+        return self.bot.wall
+
+    @property
+    def photos(self) -> _APIMethod:
+        """VK API methods namespace: getMessagesUploadServer, saveMessagesPhoto."""
+        return self.bot.photos
+
+    @property
+    def docs(self) -> _APIMethod:
+        """VK API methods namespace: getMessagesUploadServer, save."""
+        return self.bot.docs
 
     async def get_me(self) -> Group:
         """Return info about the community this bot belongs to."""

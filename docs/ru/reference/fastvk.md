@@ -101,26 +101,20 @@ bot = FastVK(token=TOKEN, group_id=GROUP_ID, dashboard=MyDashboard())
 
 `dashboard=None` (по умолчанию) — дашборд отключён.
 
-## Bot
+Все пространства VK API методов доступны напрямую на FastVK:
+
+| Свойство | Методы |
+|---|---|
+| `bot.messages` | `send`, `edit`, `delete`, `search`, `pin`, `unpin` и др. |
+| `bot.users` | `get`, `search` |
+| `bot.groups` | `getById`, `getMembers`, `getLongPollServer` |
+| `bot.wall` | `get`, `post`, `getById` |
+| `bot.photos` | `getMessagesUploadServer`, `saveMessagesPhoto` |
+| `bot.docs` | `getMessagesUploadServer`, `save` |
 
 ```python
-class Bot(Router):
-    token: str
-    group_id: int
-
-    async def start_polling(self, *, skip_updates: bool = False) -> None: ...
-    async def stop(self) -> None: ...
-
-    async def get_me(self) -> Group: ...
-    async def get_user(self, user_id: int, fields: str = "") -> User: ...
-
-    # пространства методов
-    messages: MessagesNamespace
-    users: UsersNamespace
-    groups: GroupsNamespace
-    wall: WallNamespace
-    photos: PhotosNamespace
-    docs: DocsNamespace
+await bot.messages.send(peer_id=123, message="Привет", random_id=0)
+await bot.users.get(user_ids=123)
 ```
 
 ## Router

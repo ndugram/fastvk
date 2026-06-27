@@ -101,26 +101,20 @@ bot = FastVK(token=TOKEN, group_id=GROUP_ID, dashboard=MyDashboard())
 
 Pass `dashboard=None` (default) to disable the dashboard entirely.
 
-## Bot
+All VK API method namespaces are accessible directly on FastVK:
+
+| Property | Methods |
+|---|---|
+| `bot.messages` | `send`, `edit`, `delete`, `search`, `pin`, `unpin`, etc. |
+| `bot.users` | `get`, `search` |
+| `bot.groups` | `getById`, `getMembers`, `getLongPollServer` |
+| `bot.wall` | `get`, `post`, `getById` |
+| `bot.photos` | `getMessagesUploadServer`, `saveMessagesPhoto` |
+| `bot.docs` | `getMessagesUploadServer`, `save` |
 
 ```python
-class Bot(Router):
-    token: str
-    group_id: int
-
-    async def start_polling(self, *, skip_updates: bool = False) -> None: ...
-    async def stop(self) -> None: ...
-
-    async def get_me(self) -> Group: ...
-    async def get_user(self, user_id: int, fields: str = "") -> User: ...
-
-    # method namespaces
-    messages: MessagesNamespace
-    users: UsersNamespace
-    groups: GroupsNamespace
-    wall: WallNamespace
-    photos: PhotosNamespace
-    docs: DocsNamespace
+await bot.messages.send(peer_id=123, message="Hello", random_id=0)
+await bot.users.get(user_ids=123)
 ```
 
 ## Router

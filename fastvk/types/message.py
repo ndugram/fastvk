@@ -225,6 +225,92 @@ class Message(BaseModel):
             delete_for_all=int(delete_for_all),
         )
 
+    async def search(
+        self,
+        q: str,
+        *,
+        offset: int = 0,
+        count: int = 20,
+        date: int | None = None,
+        fields: str | None = None,
+    ) -> dict:
+        """Search messages in this conversation."""
+        assert self._bot is not None
+        return await self._bot.messages.search(
+            q=q,
+            peer_id=self.peer_id,
+            offset=offset,
+            count=count,
+            date=date,
+            fields=fields,
+        )
+
+    async def get_history(
+        self,
+        *,
+        offset: int = 0,
+        count: int = 20,
+        start_message_id: int | None = None,
+        rev: int = 0,
+        fields: str | None = None,
+    ) -> dict:
+        """Get message history for this conversation."""
+        assert self._bot is not None
+        return await self._bot.messages.getHistory(
+            peer_id=self.peer_id,
+            offset=offset,
+            count=count,
+            start_message_id=start_message_id,
+            rev=rev,
+            fields=fields,
+        )
+
+    async def get_invite_link(self, *, reset: bool = False) -> str:
+        """Get invite link for this conversation."""
+        assert self._bot is not None
+        return await self._bot.messages.getInviteLink(
+            peer_id=self.peer_id,
+            reset=int(reset),
+        )
+
+    async def get_conversation_members(
+        self,
+        *,
+        fields: str | None = None,
+    ) -> dict:
+        """Get members of this conversation."""
+        assert self._bot is not None
+        return await self._bot.messages.getConversationMembers(
+            peer_id=self.peer_id,
+            fields=fields,
+        )
+
+    async def mark_as_important(self, *, important: bool = True) -> int:
+        """Mark this message as important (bookmark)."""
+        assert self._bot is not None
+        return await self._bot.messages.markAsImportant(
+            message_ids=self.id,
+            important=int(important),
+        )
+
+    async def restore(self) -> int:
+        """Restore this deleted message."""
+        assert self._bot is not None
+        return await self._bot.messages.restore(message_id=self.id)
+
+    async def get_by_conversation_message_id(
+        self,
+        *,
+        fields: str | None = None,
+    ) -> dict:
+        """Get this message by conversation message ID."""
+        assert self._bot is not None
+        return await self._bot.messages.getByConversationMessageId(
+            peer_id=self.peer_id,
+            conversation_message_ids=[self.id],
+            fields=fields,
+        )
+
     @property
     def is_private(self) -> bool:
         return 0 < self.peer_id < 2_000_000_000
