@@ -84,6 +84,25 @@ Text(contains="world")       # substring match
 Text(startswith="!")          # prefix match
 ```
 
+### CallbackDataFilter
+
+Filters callbacks by :class:`~fastvk.CallbackData` type. Automatically unpacks the payload and injects the typed object via DI.
+
+```python
+from fastvk.filters import CallbackDataFilter
+from fastvk import CallbackData
+
+
+class BuyCallback(CallbackData):
+    prefix: ClassVar[str] = "buy"
+    item_id: int
+
+
+@bot.callback(CallbackDataFilter(BuyCallback))
+async def on_buy(callback: CallbackQuery, callback_data: BuyCallback) -> None:
+    await callback.answer(f"Item #{callback_data.item_id}")
+```
+
 ## F — Magic filter
 
 `F` builds lazy filter expressions from attribute access and operators.
