@@ -15,7 +15,22 @@ from ..types.user import User
 if TYPE_CHECKING:
     from ..methods.base import VKMethod
 
+_M = TypeVar("_M", bound="VKMethod")
 _T = TypeVar("_T")
+
+_ITEM_KEYS = (
+    "items",
+    "profiles",
+    "groups",
+    "users",
+    "posts",
+    "photos",
+    "videos",
+    "audios",
+    "topics",
+    "comments",
+    "messages",
+)
 
 logger = logging.getLogger("fastvk.api")
 
@@ -155,6 +170,73 @@ class Bot:
     async def close(self) -> None:
         if self._session and not self._session.closed:
             await self._session.close()
+
+    async def collect(
+        self,
+        method_class: type[_M],
+        *,
+        max_total: int = 0,
+        items_key: str | None = None,
+        count: int = 100,
+        offset: int = 0,
+        **kwargs: Any,
+    ) -> list[Any]:
+        """
+        Collect all items from a paginated VK API method.
+
+        Accepts a typed method class (not a string) — full IDE autocomplete.
+
+        ```python
+        from fastvk.methods import GroupsGetMembers, WallGet, MessagesGetHistory
+
+        members = await bot.collect(GroupsGetMembers, group_id=123, fields="photo_200")
+        posts   = await bot.collect(WallGet, owner_id=-123, count=50)
+        history = await bot.collect(MessagesGetHistory, peer_id=2000000001)
+        ```
+        """
+        all_items: list[Any] = []
+
+        while True:
+            inst = method_class(count=count, offset=offset, **kwargs)  # type: ignore[call-overload]
+            resp = await self(inst)
+
+            if isinstance(resp, list):
+                chunk = resp
+            elif isinstance(resp, dict):
+                if items_key:
+                    chunk = resp[items_key]
+                else:
+                    for key in _ITEM_KEYS:
+                        if key in resp:
+                            chunk = resp[key]
+                            break
+                    else:
+                        raise KeyError(
+                            f"Cannot find items in response. "
+                            f"Pass `items_key=` explicitly. "
+                            f"Available keys: {list(resp.keys())}"
+                        )
+                total = resp.get("count", 0) or resp.get("total", 0)
+            else:
+                break
+
+            if not chunk:
+                break
+
+            all_items.extend(chunk)
+
+            if max_total and len(all_items) >= max_total:
+                return all_items[:max_total]
+
+            if len(chunk) < count:
+                break
+
+            if total and offset + count >= total:
+                break
+
+            offset += count
+
+        return all_items
 
 
 APIClient = Bot  # backward compat alias
