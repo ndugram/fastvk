@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import asyncio
+import logging
+import random
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import aiohttp
@@ -13,6 +16,10 @@ if TYPE_CHECKING:
     from ..methods.base import VKMethod
 
 _T = TypeVar("_T")
+
+logger = logging.getLogger("fastvk.api")
+
+_RETRYABLE_CODES = frozenset({1, 9, 10})
 
 
 class _APIMethod:
@@ -35,6 +42,7 @@ class _APICallable:
 
     async def __call__(self, **kwargs: Any) -> Any:
         from ..methods import _REGISTRY
+
         method_cls = _REGISTRY.get(self._method)
         if method_cls is not None:
             return await self._client(method_cls(**kwargs))
@@ -62,8 +70,16 @@ class Bot:
     _base_url = _api_base_url_
     _version = _api_version_
 
-    def __init__(self, token: str) -> None:
+    def __init__(
+        self,
+        token: str,
+        *,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+    ) -> None:
         self.token = token
+        self._max_retries = max_retries
+        self._retry_delay = retry_delay
         self._session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
@@ -72,13 +88,45 @@ class Bot:
         return self._session
 
     async def _call(self, method: str, **kwargs: Any) -> Any:
-        session = await self._get_session()
-        params = {"access_token": self.token, "v": self._version, **kwargs}
-        async with session.post(f"{self._base_url}{method}", data=params) as resp:
-            data: dict = await resp.json(content_type=None)
-        if "error" in data:
-            raise VKAPIError(data["error"])
-        return data.get("response")
+        for attempt in range(self._max_retries + 1):
+            try:
+                session = await self._get_session()
+                params = {"access_token": self.token, "v": self._version, **kwargs}
+                async with session.post(
+                    f"{self._base_url}{method}", data=params
+                ) as resp:
+                    data: dict = await resp.json(content_type=None)
+                if "error" in data:
+                    code = data["error"].get("error_code", 0)
+                    if attempt < self._max_retries and code in _RETRYABLE_CODES:
+                        delay = self._retry_delay * (2**attempt) + random.uniform(0, 1)
+                        logger.warning(
+                            "VK API error %d on %s, retrying in %.1fs (attempt %d/%d)",
+                            code,
+                            method,
+                            delay,
+                            attempt + 1,
+                            self._max_retries,
+                        )
+                        await asyncio.sleep(delay)
+                        continue
+                    raise VKAPIError(data["error"])
+                return data.get("response")
+            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                if attempt < self._max_retries:
+                    delay = self._retry_delay * (2**attempt) + random.uniform(0, 1)
+                    logger.warning(
+                        "Network error on %s: %s, retrying in %.1fs (attempt %d/%d)",
+                        method,
+                        e,
+                        delay,
+                        attempt + 1,
+                        self._max_retries,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                raise
+        raise RuntimeError("Unreachable")
 
     async def __call__(self, method: VKMethod[_T]) -> _T:
         params = method.model_dump(exclude_none=True)
