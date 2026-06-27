@@ -1,8 +1,7 @@
 from typing import ClassVar
 
-from fastvk import FastVK
-from fastvk.callback_data import CallbackData
-from fastvk.filters import Command
+from fastvk import FastVK, CallbackData
+from fastvk.filters import CallbackDataFilter, Command
 from fastvk.keyboard import Button, Keyboard
 from fastvk.types import CallbackQuery, Message
 
@@ -24,14 +23,8 @@ class ConfirmCallback(CallbackData):
 @bot.message(Command("shop"))
 async def shop(message: Message) -> None:
     kb = Keyboard(inline=True).row(
-        Button.callback(
-            "Товар 1",
-            payload=ProductCallback(product_id=1).pack(),
-        ),
-        Button.callback(
-            "Товар 2",
-            payload=ProductCallback(product_id=2).pack(),
-        ),
+        Button.callback("Товар 1", payload=ProductCallback(product_id=1).pack()),
+        Button.callback("Товар 2", payload=ProductCallback(product_id=2).pack()),
     )
     await message.answer("Выберите товар:", keyboard=kb)
 
@@ -53,19 +46,18 @@ async def confirm(message: Message) -> None:
     )
 
 
-@bot.callback()
-async def on_product(callback: CallbackQuery) -> None:
-    cb = ProductCallback.unpack(callback.payload)
-    await callback.answer(f"Товар #{cb.product_id}: {cb.action}")
+
+@bot.callback(CallbackDataFilter(ProductCallback))
+async def on_product(callback: CallbackQuery, callback_data: ProductCallback) -> None:
+    await callback.answer(f"Товар #{callback_data.product_id}: {callback_data.action}")
 
 
-@bot.callback()
-async def on_confirm(callback: CallbackQuery) -> None:
-    cb = ConfirmCallback.unpack(callback.payload)
-    if cb.action == "cancel":
+@bot.callback(CallbackDataFilter(ConfirmCallback))
+async def on_confirm(callback: CallbackQuery, callback_data: ConfirmCallback) -> None:
+    if callback_data.action == "cancel":
         await callback.answer("Отменено")
     else:
-        await callback.answer(f"Подтверждено (item={cb.item_id})")
+        await callback.answer(f"Подтверждено (item={callback_data.item_id})")
 
 
 if __name__ == "__main__":
