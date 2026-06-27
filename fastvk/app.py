@@ -73,6 +73,35 @@ class FastVK(Router):
         """Return info about the community this bot belongs to."""
         return await self.bot.get_me()
 
+    async def collect(
+        self,
+        method_class: type,
+        *,
+        max_total: int = 0,
+        items_key: str | None = None,
+        count: int = 100,
+        offset: int = 0,
+        **kwargs: object,
+    ) -> list[object]:
+        """Collect all items from a paginated VK API method.
+
+        Delegates to :meth:`Bot.collect`.
+
+        ```python
+        from fastvk.methods import GroupsGetMembers
+
+        members = await bot.collect(GroupsGetMembers, group_id=123)
+        ```
+        """
+        return await self.bot.collect(
+            method_class,
+            max_total=max_total,
+            items_key=items_key,
+            count=count,
+            offset=offset,
+            **kwargs,
+        )
+
     def middleware(self, mw: BaseMiddleware) -> BaseMiddleware:
         self.middleware_manager.register(mw)
         return mw

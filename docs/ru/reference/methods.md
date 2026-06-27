@@ -119,6 +119,27 @@ await bot.groups.get_by_id(
 
 ## wall
 
+### wall.get
+
+```python
+await bot.wall.get(
+    owner_id: int,
+    *,
+    count: int = 20,
+    offset: int = 0,
+    filter: str | None = None,
+    extended: bool = False,
+) -> dict   # {"count": int, "items": list[dict]}
+```
+
+Пагинированная лента записей. Лучше всего использовать с `bot.collect()`:
+
+```python
+from fastvk.methods import WallGet
+
+posts = await bot.collect(WallGet, owner_id=-123, count=100)
+```
+
 ### wall.post
 
 ```python

@@ -38,6 +38,7 @@ Key features:
 - **Familiar** — if you know FastAPI or aiogram, you already know FastVK. Same patterns, same ergonomics.
 - **CallbackData** — typed callback data factory with `pack()` / `unpack()` — inspired by aiogram.
 - **Auto-retry** — built-in exponential backoff for VK API calls (network errors, flood control).
+- **Auto-pagination** — `bot.collect()` iterates paginated methods (members, posts, history) with no manual loops.
 - **Async** — built on <a href="https://docs.aiohttp.org/" target="_blank">aiohttp</a> with full async/await support from top to bottom.
 - **FSM** — built-in Finite State Machine with `State`, `StatesGroup`, and pluggable storage: Memory, Redis, SQLite.
 - **Filters** — `Command`, `Text`, `StateFilter`, `FromUser`, `IsChat` and custom filters via any callable.
