@@ -84,6 +84,25 @@ Text(contains="world")       # совпадение подстроки
 Text(startswith="!")          # совпадение с началом
 ```
 
+### CallbackDataFilter
+
+Фильтрует колбэки по типу :class:`~fastvk.CallbackData`. Автоматически распаковывает payload и инжектит типизированный объект через DI.
+
+```python
+from fastvk.filters import CallbackDataFilter
+from fastvk import CallbackData
+
+
+class BuyCallback(CallbackData):
+    prefix: ClassVar[str] = "buy"
+    item_id: int
+
+
+@bot.callback(CallbackDataFilter(BuyCallback))
+async def on_buy(callback: CallbackQuery, callback_data: BuyCallback) -> None:
+    await callback.answer(f"Товар #{callback_data.item_id}")
+```
+
 ## F — Magic filter
 
 `F` строит ленивые выражения фильтрации через доступ к атрибутам и операторы.

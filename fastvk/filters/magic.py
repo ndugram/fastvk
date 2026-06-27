@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import re
 from typing import Any
 
 
@@ -51,7 +51,7 @@ class _OpFilter(_BaseFilter):
         if self._op == "contains":
             return v is not None and self._value in v
         if self._op == "regexp":
-            import re
+
             return isinstance(v, str) and bool(re.search(self._value, v))
         return False
 

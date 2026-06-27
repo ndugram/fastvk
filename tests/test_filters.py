@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 
+from typing import ClassVar
 
-from fastvk.filters.builtin import Command, Text, StateFilter
+from fastvk.callback_data import CallbackData
+from fastvk.filters.builtin import CallbackDataFilter, Command, Text, StateFilter
+from fastvk.types.callback import CallbackQuery
 from fastvk.filters.magic import F
 from fastvk.fsm.context import FSMContext
 from fastvk.fsm.state import State, StatesGroup
@@ -212,6 +215,75 @@ class TestStateFilter:
         f = StateFilter(Form.waiting)
         result = await f(_FakeMsg(), {FSMContext: ctx})
         assert result is False
+
+
+def _make_cb(payload: dict) -> CallbackQuery:
+    return CallbackQuery(
+        user_id=1,
+        peer_id=2,
+        event_id="test",
+        payload=payload,
+        conversation_message_id=0,
+    )
+
+
+class TestCallbackDataFilter:
+    def test_matches_and_injects(self) -> None:
+        class BuyCb(CallbackData):
+            prefix: ClassVar[str] = "buy"
+            item_id: int
+
+        f = CallbackDataFilter(BuyCb)
+        cb = _make_cb({"item_id": 5})
+        context: dict = {}
+        assert f(cb, context) is True
+        assert BuyCb in context
+        assert context[BuyCb].item_id == 5
+
+    def test_no_match_wrong_payload(self) -> None:
+        class BuyCb(CallbackData):
+            prefix: ClassVar[str] = "buy"
+            item_id: int
+
+        f = CallbackDataFilter(BuyCb)
+        cb = _make_cb({"other": "data"})
+        assert f(cb, {}) is False
+
+    def test_no_match_non_callback_event(self) -> None:
+        class BuyCb(CallbackData):
+            prefix: ClassVar[str] = "buy"
+            item_id: int
+
+        f = CallbackDataFilter(BuyCb)
+        msg = _FakeMsg("/start")
+        assert f(msg, {}) is False
+
+    def test_multiple_callback_types_isolated(self) -> None:
+        class BuyCb(CallbackData):
+            prefix: ClassVar[str] = "buy"
+            item_id: int
+
+        class VoteCb(CallbackData):
+            prefix: ClassVar[str] = "vote"
+            rating: int
+
+        buy_filter = CallbackDataFilter(BuyCb)
+        vote_filter = CallbackDataFilter(VoteCb)
+
+        cb = _make_cb({"item_id": 1})
+        ctx: dict = {}
+        assert buy_filter(cb, ctx) is True
+        assert vote_filter(cb, ctx) is False
+        assert BuyCb in ctx
+        assert VoteCb not in ctx
+
+    def test_repr(self) -> None:
+        class BuyCb(CallbackData):
+            prefix: ClassVar[str] = "buy"
+            item_id: int
+
+        f = CallbackDataFilter(BuyCb)
+        assert "BuyCb" in repr(f)
 
 
 class TestF:
