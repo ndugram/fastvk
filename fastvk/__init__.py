@@ -11,6 +11,7 @@ from .filters.magic import F
 from .filters.builtin import Command, CommandHelp, CommandStart
 from .enums import ChatAction, Color, ParseMode
 from .upload import Uploader
+from .callback_data import CallbackData
 from . import enums
 from . import filters
 from . import fsm
@@ -20,13 +21,28 @@ from . import dashboard
 from .logging import setup_logging
 
 __all__ = [
-    "FastVK", "Router", "Bot", "BackgroundTasks",
-    "Button", "Keyboard",
-    "CallbackQuery", "Group", "F",
-    "Command", "CommandStart", "CommandHelp",
-    "ChatAction", "Color", "ParseMode",
+    "FastVK",
+    "Router",
+    "Bot",
+    "BackgroundTasks",
+    "Button",
+    "Keyboard",
+    "CallbackQuery",
+    "Group",
+    "F",
+    "Command",
+    "CommandStart",
+    "CommandHelp",
+    "ChatAction",
+    "Color",
+    "ParseMode",
     "Uploader",
-    "enums", "filters", "fsm", "methods", "types",
+    "CallbackData",
+    "enums",
+    "filters",
+    "fsm",
+    "methods",
+    "types",
     "dashboard",
     "setup_logging",
 ]

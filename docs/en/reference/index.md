@@ -9,6 +9,7 @@ Complete API reference for FastVK.
 | [Router](router.md) | `Router`, handler decorators |
 | [Filters](filters.md) | Built-in filters, `F` magic filter |
 | [Keyboard](keyboard.md) | `Button`, `Keyboard`, `Color` |
+| [CallbackData](callback_data.md) | Typed callback data factory |
 | [FSM](fsm.md) | `State`, `StatesGroup`, `FSMContext`, storages |
 | [Types](types.md) | `Message`, `User`, `Group`, `CallbackQuery` |
 | [Methods](methods.md) | Typed API method wrappers |

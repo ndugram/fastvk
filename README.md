@@ -36,6 +36,7 @@ FastVK is a modern **async VK bot framework** for Python. It brings a decorator-
 Key features:
 
 - **Familiar** — if you know FastAPI or aiogram, you already know FastVK. Same patterns, same ergonomics.
+- **CallbackData** — typed callback data factory with `pack()` / `unpack()` — inspired by aiogram.
 - **Async** — built on <a href="https://docs.aiohttp.org/" target="_blank">aiohttp</a> with full async/await support from top to bottom.
 - **FSM** — built-in Finite State Machine with `State`, `StatesGroup`, and pluggable storage: Memory, Redis, SQLite.
 - **Filters** — `Command`, `Text`, `StateFilter`, `FromUser`, `IsChat` and custom filters via any callable.
@@ -256,6 +257,53 @@ async def vote(message: Message) -> None:
 async def on_vote(cb: CallbackQuery) -> None:
     choice = cb.payload.get("v")
     await cb.answer(f"Вы проголосовали: {'за' if choice == 'yes' else 'против'}")
+```
+
+</details>
+
+<details markdown="1">
+<summary>With CallbackData (typed payloads)...</summary>
+
+Use typed callback data instead of raw dicts — inspired by aiogram's `CallbackData`:
+
+```python
+from typing import ClassVar
+
+from fastvk import FastVK, CallbackData
+from fastvk.filters import Command
+from fastvk.keyboard import Button, Keyboard
+from fastvk.types import CallbackQuery, Message
+
+
+class ProductCallback(CallbackData):
+    prefix: ClassVar[str] = "product"
+    product_id: int
+    action: str = "view"
+
+
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
+
+
+@bot.message(Command("shop"))
+async def shop(message: Message) -> None:
+    kb = (
+        Keyboard(inline=True)
+        .row(
+            Button.callback("Товар 1", payload=ProductCallback(product_id=1).pack()),
+            Button.callback("Товар 2", payload=ProductCallback(product_id=2).pack()),
+        )
+    )
+    await message.answer("Каталог:", keyboard=kb)
+
+
+@bot.callback()
+async def on_product(callback: CallbackQuery) -> None:
+    cb = ProductCallback.unpack(callback.payload)
+    await callback.answer(f"Товар #{cb.product_id}: {cb.action}")
+```
+
+```python
+# Compact payload format:  product:{"product_id":1,"action":"view"}
 ```
 
 </details>
