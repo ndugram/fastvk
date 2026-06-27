@@ -43,6 +43,17 @@ await message.answer_photo(attachment, *, caption=None, ...) -> int
 await message.answer_doc(attachment, *, caption=None, ...) -> int
 await message.answer_video(attachment, *, caption=None, ...) -> int
 await message.answer_sticker(sticker_id) -> int
+
+# вспомогательные методы чата (используют message.peer_id)
+await message.search(q, *, offset=0, count=20, date=None, fields=None) -> dict
+await message.get_history(*, offset=0, count=20, start_message_id=None, rev=0, fields=None) -> dict
+await message.get_invite_link(*, reset=False) -> str
+await message.get_conversation_members(*, fields=None) -> dict
+
+# вспомогательные методы сообщения
+await message.mark_as_important(*, important=True) -> int
+await message.restore() -> int
+await message.get_by_conversation_message_id(*, fields=None) -> dict
 ```
 
 ## User
