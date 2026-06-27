@@ -51,6 +51,45 @@ async def get_me(self) -> Group
 
 Return info about the bot's community (calls `groups.getById`).
 
+### collect
+
+```python
+async def collect(
+    method_class: type[VKMethod],
+    *,
+    max_total: int = 0,
+    items_key: str | None = None,
+    count: int = 100,
+    offset: int = 0,
+    **kwargs,
+) -> list[Any]
+```
+
+Automatically iterate over all pages of a paginated VK API method.
+
+Accepts a typed method class — full IDE autocomplete.
+
+```python
+from fastvk.methods import GroupsGetMembers, WallGet, MessagesGetHistory
+
+# All group members (auto-paginated)
+members = await bot.collect(GroupsGetMembers, group_id=123, fields="photo_200")
+
+# Recent posts (max 500)
+posts = await bot.collect(WallGet, owner_id=-123, count=100, max_total=500)
+
+# Chat history
+history = await bot.collect(MessagesGetHistory, peer_id=2000000001)
+```
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `method_class` | — | Typed VK method class (e.g. `GroupsGetMembers`) |
+| `max_total` | `0` | Limit total items (`0` = unlimited) |
+| `items_key` | auto | Response key with item list (auto-detected) |
+| `count` | `100` | Items per page |
+| `offset` | `0` | Starting offset |
+
 ### get_user
 
 ```python
