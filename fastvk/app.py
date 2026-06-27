@@ -39,9 +39,11 @@ class FastVK(Router):
         lifespan: Lifespan | None = None,
         dashboard: BaseDashboard | None = None,
         throttle_rate: float = 1.0,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
     ) -> None:
         super().__init__()
-        self.bot = Bot(token=token)
+        self.bot = Bot(token=token, max_retries=max_retries, retry_delay=retry_delay)
         self.group_id: int = group_id or 0
         self.storage: BaseStorage = storage or MemoryStorage()
         self._lifespan: Lifespan | None = lifespan
@@ -78,7 +80,9 @@ class FastVK(Router):
     async def _process_update(self, update: Update) -> None:
         logger.debug("← %s", update.type)
         self._stats["total"] += 1
-        self._stats["by_type"][update.type] = self._stats["by_type"].get(update.type, 0) + 1
+        self._stats["by_type"][update.type] = (
+            self._stats["by_type"].get(update.type, 0) + 1
+        )
         self._log.appendleft({"t": update.type, "s": round(time.time(), 3)})
         try:
             handled = await self.middleware_manager.trigger(
@@ -116,7 +120,11 @@ class FastVK(Router):
 
     async def _run_polling(self) -> None:
         if self._dashboard is not None and self._dashboard.config.dashboard:
-            dash = Dashboard(self, host=self._dashboard.config.dashboard_host, port=self._dashboard.config.dashboard_port)
+            dash = Dashboard(
+                self,
+                host=self._dashboard.config.dashboard_host,
+                port=self._dashboard.config.dashboard_port,
+            )
             await dash.start()
 
         if self._lifespan is not None:
@@ -144,13 +152,25 @@ class FastVK(Router):
     ) -> None:
         await self._resolve_group_id()
         self._stats["started_at"] = time.monotonic()
-        logger.info("FastVK webhook mode (group_id=%d)  %s:%d%s", self.group_id, host, port, path)
+        logger.info(
+            "FastVK webhook mode (group_id=%d)  %s:%d%s",
+            self.group_id,
+            host,
+            port,
+            path,
+        )
 
         if self._dashboard is not None and self._dashboard.config.dashboard:
-            dash = Dashboard(self, host=self._dashboard.config.dashboard_host, port=self._dashboard.config.dashboard_port)
+            dash = Dashboard(
+                self,
+                host=self._dashboard.config.dashboard_host,
+                port=self._dashboard.config.dashboard_port,
+            )
             await dash.start()
 
-        handler = WebhookHandler(self, confirmation_token=confirmation_token, secret=secret)
+        handler = WebhookHandler(
+            self, confirmation_token=confirmation_token, secret=secret
+        )
         aioapp = web.Application()
         aioapp.router.add_post(path, handler.handle)
 
