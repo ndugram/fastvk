@@ -37,8 +37,13 @@ Key features:
 
 - **Familiar** — if you know FastAPI or aiogram, you already know FastVK. Same patterns, same ergonomics.
 - **CallbackData** — typed callback data factory with `pack()` / `unpack()` — inspired by aiogram.
-- **Auto-retry** — built-in exponential backoff for VK API calls (network errors, flood control).
+- **Auto-retry** — built-in exponential backoff for VK API calls (network errors, flood control, rate limits) plus optional captcha solving.
 - **Auto-pagination** — `bot.collect()` iterates paginated methods (members, posts, history) with no manual loops.
+- **Batching** — `bot.execute_batch()` packs up to 25 API calls into one request.
+- **Scheduler** — `@scheduler.every("30m")` / `@scheduler.at("09:00")` for periodic jobs.
+- **i18n** — JSON catalogs + `I18nMiddleware` with per-user locale.
+- **CLI** — `fastvk new mybot` scaffolds a project, `fastvk run` runs it.
+- **Testing** — `fastvk.test` ships `MockedBot` and update factories for unit tests.
 - **Async** — built on <a href="https://docs.aiohttp.org/" target="_blank">aiohttp</a> with full async/await support from top to bottom.
 - **FSM** — built-in Finite State Machine with `State`, `StatesGroup`, and pluggable storage: Memory, Redis, SQLite.
 - **Filters** — `Command`, `Text`, `StateFilter`, `FromUser`, `IsChat` and custom filters via any callable.
@@ -595,8 +600,15 @@ Handler parameters are injected **by type** — declare what you need, the frame
 | `FSMContext` | FSM state accessor for the current user |
 | `Bot` | VK API client |
 | `Update` | Full raw update object |
+| `User` | Sender info — **fetched lazily**, only when you ask for it |
 | `BackgroundTasks` | Fire-and-forget background tasks |
+| `re.Match` | Regex match object (when using the `Regexp` filter) |
 | Your `CallbackData` subclass | Unpacked callback payload (when using `CallbackDataFilter`) |
+| Any value a middleware puts in `data` | Injected by its type |
+
+> **Note:** FastVK no longer calls `users.get` on every update. Declare
+> `user: User` in a handler (or call `await message.get_user()`) when you need
+> the sender; otherwise `message.from_user` is `None`.
 
 ```python
 @router.message()
