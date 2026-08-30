@@ -65,6 +65,22 @@ bot.run_webhook(
 )
 ```
 
+## Health and metrics endpoints
+
+In webhook mode the server also exposes:
+
+| Path | Response |
+|---|---|
+| `GET /health` | `{"status": "ok"}` — for load balancers / uptime checks |
+| `GET /metrics` | Prometheus text: `fastvk_updates_total`, `fastvk_updates_handled_total`, `fastvk_errors_total`, `fastvk_uptime_seconds`, `fastvk_inflight_updates`, `fastvk_updates_by_type_total{type="…"}` |
+
+The dashboard serves `/metrics` too, so polling bots can be scraped as well.
+
+## Duplicate deliveries
+
+VK re-sends a Callback API event if it doesn't get `"ok"` fast enough. FastVK
+de-duplicates by `event_id`, so a retried event is not processed twice.
+
 ## Local development with ngrok
 
 ```bash

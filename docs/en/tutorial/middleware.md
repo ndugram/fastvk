@@ -26,39 +26,46 @@ class LoggingMiddleware(BaseMiddleware[Message]):
 
 ## Registering middleware
 
-```python
-bot = FastVK(token="...", group_id=123)
+Global (wraps every update, runs inside the automatic throttling middleware):
 
-bot.message.middleware(LoggingMiddleware())
-bot.callback.middleware(LoggingMiddleware())
+```python
+bot = FastVK(token="...", group_id=123, middleware=[LoggingMiddleware()])
+# or later:
+bot.middleware(LoggingMiddleware())
 ```
 
-Or on a router:
+Per-router (wraps only that router's handlers and its sub-routers):
 
 ```python
 router = Router()
-router.message.middleware(LoggingMiddleware())
+router.middleware(LoggingMiddleware())
 ```
 
 ## Injecting data into handlers
 
-Middleware can inject values into `data` dict, which feeds into handler DI:
+Anything a middleware puts into the `data` dict is injected into handlers
+**by its type**:
 
 ```python
-class DatabaseMiddleware(BaseMiddleware[Message]):
+class DatabaseMiddleware(BaseMiddleware):
     def __init__(self, pool) -> None:
         self.pool = pool
 
-    async def __call__(self, call_next, event: Message, data: dict) -> None:
+    async def __call__(self, call_next, event, data: dict) -> None:
         async with self.pool.acquire() as conn:
-            data["db"] = conn          # injected into handler via DI
-            await call_next(event, data)
+            data[Connection] = conn        # key by type…
+            # data["db"] = conn            # …a plain key also works: it's
+                                           #   registered under type(conn)
+            return await call_next(event, data)
 
 
 @bot.message()
-async def handler(message: Message, db) -> None:
-    rows = await db.fetch("SELECT 1")
+async def handler(message: Message, conn: Connection) -> None:
+    rows = await conn.fetch("SELECT 1")
 ```
+
+The parameter is matched by its annotation, so annotate it with the value's
+type (`conn: Connection`), not just a name.
 
 ## Built-in throttling
 
