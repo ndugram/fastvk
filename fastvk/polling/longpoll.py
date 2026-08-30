@@ -5,6 +5,8 @@ import logging
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING
 
+import aiohttp
+
 from ..types.update import Update
 
 if TYPE_CHECKING:
@@ -49,6 +51,9 @@ class LongPoller:
         """Yield updates indefinitely until cancelled."""
         server, key, ts = await self._get_server()
         session = await self.api._get_session()
+        # Give the long-poll GET its own timeout — the shared client timeout
+        # is tuned for short API calls and would abort a legitimate wait.
+        lp_timeout = aiohttp.ClientTimeout(total=self.wait + 15)
         logger.info("Polling started")
 
         while True:
@@ -57,7 +62,7 @@ class LongPoller:
                     f"{server}"
                     f"?act=a_check&key={key}&ts={ts}&wait={self.wait}"
                 )
-                async with session.get(url) as resp:
+                async with session.get(url, timeout=lp_timeout) as resp:
                     data: dict = await resp.json(content_type=None)
 
                 failed = data.get("failed")
