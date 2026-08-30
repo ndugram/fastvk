@@ -48,6 +48,21 @@ Button.location() -> Button
 
 Creates a button that requests the user's geolocation.
 
+### Button.vkapps
+
+```python
+Button.vkapps(
+    label: str,
+    *,
+    app_id: int,
+    owner_id: int | None = None,
+    hash: str = "",
+    payload: dict | str | None = None,
+) -> ButtonDict
+```
+
+Creates a button that opens a VK Mini App.
+
 ### Button.vkpay
 
 ```python
@@ -124,6 +139,25 @@ Alias for `kb.build()`.
 Keyboard.remove() -> str
 ```
 Return the JSON string that removes the keyboard from a chat.
+
+## Carousel
+
+```python
+from fastvk import Carousel
+
+Carousel().element(
+    *,
+    title: str = "",
+    description: str = "",
+    photo_id: str | None = None,
+    buttons: list[ButtonDict] | None = None,
+    link: str | None = None,
+) -> Carousel
+```
+
+Builds a message `template` (`type: "carousel"`, ≤ 10 elements). `str(carousel)`
+/ `carousel.build()` returns the JSON; pass it as `template=` to
+`messages.send` or use `message.answer_carousel(...)`.
 
 ### Example
 

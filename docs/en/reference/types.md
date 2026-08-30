@@ -114,16 +114,19 @@ from fastvk.types import CallbackQuery
 ### Properties
 
 ```python
-callback.from_user  # User | None — auto-fetched from VK API
+callback.from_user  # User | None — None until resolved (declare user: User)
 ```
 
 ### Methods
 
 ```python
-await callback.answer(text=None, *, event_data=None) -> None
+await callback.answer(text="", *, link=None, app_hash=None) -> None
+await callback.edit_message(text, *, keyboard=None, attachment=None) -> int
 ```
 
-Sends a snackbar notification to the user (or clears it if `text=None`).
+`answer()` shows a snackbar, or opens a link (`link=`) / community app
+(`app_hash=`). `edit_message()` edits the message the button belongs to, by
+its `conversation_message_id`.
 
 ## GroupJoinEvent
 
@@ -193,6 +196,33 @@ async def on_post(event: WallPostEvent, user: User | None = None) -> None:
 !!! note "User injection"
     `User` is injected automatically for `group_join` and `group_leave` (always positive `user_id`).
     For `wall_post_new` it is injected only when `from_id > 0` (real user, not community).
+
+## Attachments
+
+Typed models parsed from `message.attachments`. Import from `fastvk.types`.
+
+| Model | `type` | Notable fields |
+|---|---|---|
+| `Photo` | `photo` | `sizes: list[PhotoSize]`, `largest`, `url`, `text` |
+| `Video` | `video` | `title`, `description`, `duration` |
+| `Audio` | `audio` | `artist`, `title`, `duration`, `url` |
+| `Document` | `doc` | `title`, `size`, `ext`, `url` |
+| `AudioMessage` | `audio_message` | `duration`, `link_ogg`, `link_mp3`, `transcript` |
+| `Sticker` | `sticker` | `sticker_id`, `product_id` |
+| `Graffiti` | `graffiti` | `url`, `width`, `height` |
+| `Link` | `link` | `url`, `title`, `description` |
+| `Poll` | `poll` | `question`, `votes`, `anonymous`, `multiple` |
+| `WallPost` | `wall` | `from_id`, `to_id`, `text` |
+
+Every model (except `Sticker`/`Link`) exposes `attachment_string`
+(`"photo-1_2"` / `"doc-1_2_key"`) and `raw` (the untouched dict).
+
+```python
+from fastvk.types import parse_attachment, parse_attachments
+
+photo = parse_attachment(message.attachments[0])   # one dict -> model
+models = parse_attachments(message.attachments)    # list -> list
+```
 
 ## Update
 

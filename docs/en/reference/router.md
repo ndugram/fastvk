@@ -41,6 +41,39 @@ router.callback.filter(IsAdmin())
 
 All handlers on this router will only receive events where `IsAdmin()` returns `True`.
 
+## Event decorators
+
+Besides `@router.message` / `@router.callback`:
+
+```python
+@router.message_reply()     @router.message_allow()   @router.message_edit()
+@router.group_join()        @router.group_leave()     @router.wall_post_new()
+@router.on("photo_new")     # any raw event type by name
+```
+
+## Middleware
+
+```python
+router.middleware(mw) -> mw
+```
+
+Registers a middleware that wraps this router's handlers (and its
+sub-routers'). `mw(call_next, event, data)` — same contract as
+`BaseMiddleware`. Values placed in `data` are injected into handlers by type.
+
+## Lifecycle hooks
+
+```python
+@router.startup
+async def on_start(bot: FastVK) -> None: ...
+
+@router.shutdown
+async def on_stop() -> None: ...
+```
+
+Run once on start / stop, with DI by type. `FastVK` invokes the hooks of
+itself and every included router.
+
 ## include_router
 
 ```python

@@ -22,6 +22,11 @@ Bot(
 | `storage` | `BaseStorage` | FSM storage. Default: `MemoryStorage()` |
 | `lifespan` | async context manager | Startup/shutdown hook |
 | `api_version` | `str` | VK API version. Default: `"5.199"` |
+| `timeout` | `float` | Per-request HTTP timeout in seconds. Default: `30.0` |
+| `max_retries` | `int` | Retries for network errors and codes 1/6/9/10/29. Default: `3` |
+| `captcha_handler` | `async (sid, img_url) -> answer` | Solver invoked on error code 14 |
+| `max_concurrency` | `int` | `FastVK` only — cap on updates processed in parallel (`0` = unbounded) |
+| `polling` | `"group"` \| `"user"` | `FastVK` only — long-poll flavour. Default: `"group"` |
 
 ## Methods
 
@@ -103,13 +108,48 @@ user = await bot.get_user(123456)
 user = await bot.get_user(123456, fields="photo_200,city")
 ```
 
+### execute / execute_batch
+
+```python
+async def execute(self, code: str) -> Any
+async def execute_batch(self, calls: list[tuple[str, dict]]) -> list[Any]
+```
+
+`execute()` runs a VKScript snippet server-side. `execute_batch()` packs up to
+25 API calls into one request and returns their results in order.
+
+```python
+results = await bot.execute_batch([
+    ("users.get", {"user_ids": 1}),
+    ("groups.getById", {"group_id": 1}),
+])
+```
+
+### download
+
+```python
+async def download(self, url: str, dest: str | Path | None = None) -> bytes
+```
+
+Download a file (e.g. an attachment URL). Writes to `dest` if given.
+
+### set_captcha_handler
+
+```python
+def set_captcha_handler(self, handler: Callable[[str, str], Awaitable[str]]) -> None
+```
+
+Register `(captcha_sid, captcha_img_url) -> answer`. When VK returns error
+code 14 the failed call is retried once with the answer.
+
 ### _call
 
 ```python
 async def _call(self, method: str, **params) -> Any
 ```
 
-Low-level API call. Raises `VKAPIError` on error response.
+Low-level API call. Retries network errors and codes 1/6/9/10/29 with
+exponential backoff; raises `VKAPIError` otherwise.
 
 ## API namespaces
 

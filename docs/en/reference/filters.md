@@ -84,6 +84,34 @@ Text(contains="world")       # substring match
 Text(startswith="!")          # prefix match
 ```
 
+### Regexp
+
+```python
+from fastvk.filters import Regexp
+
+Regexp(r"^#(\d+)$")               # re.search on message.text
+Regexp(r"buy", flags=re.I)
+```
+
+Injects the `re.Match` object (declare `match: re.Match` in the handler).
+
+### ContentType / HasAttachment
+
+```python
+from fastvk.filters import ContentType, HasAttachment
+
+ContentType("photo")                 # first attachment type / "text"
+ContentType("audio_message", "doc")  # any of these
+HasAttachment()                      # at least one attachment
+HasAttachment("video", "wall")       # any attachment of these types
+```
+
+### Command — ignore_case
+
+```python
+Command("Start", "Menu", ignore_case=True)   # matches /START, /menu
+```
+
 ### CallbackDataFilter
 
 Filters callbacks by :class:`~fastvk.CallbackData` type. Automatically unpacks the payload and injects the typed object via DI.
