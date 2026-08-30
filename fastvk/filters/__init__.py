@@ -6,8 +6,11 @@ from .builtin import (
     Command,
     CommandHelp,
     CommandStart,
+    ContentType,
     FromUser,
+    HasAttachment,
     IsChat,
+    Regexp,
     StateFilter,
     Text,
 )
@@ -26,5 +29,8 @@ __all__ = [
     "IsChat",
     "StateFilter",
     "Text",
+    "Regexp",
+    "ContentType",
+    "HasAttachment",
     "CallbackDataFilter",
 ]
