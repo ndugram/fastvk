@@ -16,6 +16,7 @@ def _make_app_mock(group_id: int = 1) -> MagicMock:
     app = MagicMock()
     app.group_id = group_id
     app._process_update = AsyncMock()
+    app._spawn = MagicMock()
     return app
 
 
@@ -146,9 +147,9 @@ class TestWebhookUpdateDispatch:
             },
         )
         await asyncio.sleep(0.05)
-        mock_app._process_update.assert_called_once()
+        mock_app._spawn.assert_called_once()
 
-        update: Update = mock_app._process_update.call_args[0][0]
+        update: Update = mock_app._spawn.call_args[0][0]
         assert update.type == "message_new"
         assert update.event_id == "evt_1"
         assert update.group_id == 1
@@ -169,7 +170,7 @@ class TestWebhookUpdateDispatch:
             },
         )
         await asyncio.sleep(0.05)
-        update: Update = mock_app._process_update.call_args[0][0]
+        update: Update = mock_app._spawn.call_args[0][0]
         assert update.group_id == 42
 
         await client.close()
