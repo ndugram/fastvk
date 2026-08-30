@@ -28,6 +28,14 @@ jobs:
         run: |
           pip install -e ".[dev]"
 
+      - name: Lint
+        run: |
+          ruff check fastvk/ tests/
+
+      - name: Type-check
+        run: |
+          mypy fastvk/
+
       - name: Run tests
         run: |
           pytest tests/ --no-cov
