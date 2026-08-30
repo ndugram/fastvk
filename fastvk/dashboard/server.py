@@ -66,6 +66,7 @@ class Dashboard:
         aioapp.router.add_get("/api/info", self._handle_info)
         aioapp.router.add_get("/api/stats", self._handle_stats)
         aioapp.router.add_get("/api/log", self._handle_log)
+        aioapp.router.add_get("/metrics", self._handle_metrics)
 
         self._runner = web.AppRunner(aioapp, access_log=None)
         await self._runner.setup()
@@ -90,6 +91,11 @@ class Dashboard:
             text=json.dumps(list(self._app._log)),
             content_type="application/json",
         )
+
+    async def _handle_metrics(self, request: web.Request) -> web.Response:
+        from ..metrics import render_prometheus
+
+        return web.Response(text=render_prometheus(self._app), content_type="text/plain")
 
     async def stop(self) -> None:
         if self._runner:
