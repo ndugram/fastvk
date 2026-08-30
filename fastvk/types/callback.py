@@ -43,10 +43,21 @@ class CallbackQuery(BaseModel):
         obj._bot = bot
         return obj
 
-    async def answer(self, text: str = "", *, link: str | None = None) -> None:
+    async def answer(
+        self,
+        text: str = "",
+        *,
+        link: str | None = None,
+        app_hash: str | None = None,
+    ) -> None:
+        """Respond to the click: show a snackbar, open a link, or open the community app."""
         assert self._bot is not None
         if link is not None:
             event_data = json.dumps({"type": "open_link", "link": link}, ensure_ascii=False)
+        elif app_hash is not None:
+            event_data = json.dumps(
+                {"type": "open_app", "app_id": None, "hash": app_hash}, ensure_ascii=False
+            )
         else:
             event_data = json.dumps({"type": "show_snackbar", "text": text}, ensure_ascii=False)
         await self._bot.messages.sendMessageEventAnswer(
@@ -54,4 +65,21 @@ class CallbackQuery(BaseModel):
             user_id=self.user_id,
             peer_id=self.peer_id,
             event_data=event_data,
+        )
+
+    async def edit_message(
+        self,
+        text: str,
+        *,
+        keyboard: Any = None,
+        attachment: str | None = None,
+    ) -> int:
+        """Edit the message the pressed button belongs to."""
+        assert self._bot is not None
+        return await self._bot.messages.edit(
+            peer_id=self.peer_id,
+            conversation_message_id=self.conversation_message_id,
+            message=text,
+            keyboard=str(keyboard) if keyboard is not None else None,
+            attachment=attachment,
         )
