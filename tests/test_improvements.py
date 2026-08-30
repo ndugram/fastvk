@@ -9,7 +9,6 @@ import aiohttp
 import pytest
 
 from fastvk.api.client import Bot, _RETRYABLE_CODES
-from fastvk.exceptions import VKAPIError
 from fastvk.filters.builtin import Command, ContentType, HasAttachment, Regexp
 from fastvk.fsm.storage import MemoryStorage
 from fastvk.keyboard import Button, Carousel
