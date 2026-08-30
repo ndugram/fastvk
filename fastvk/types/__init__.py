@@ -1,5 +1,20 @@
 from __future__ import annotations
 
+from .attachments import (
+    Audio,
+    AudioMessage,
+    Document,
+    Graffiti,
+    Link,
+    Photo,
+    PhotoSize,
+    Poll,
+    Sticker,
+    Video,
+    WallPost,
+    parse_attachment,
+    parse_attachments,
+)
 from .callback import CallbackQuery
 from .command import CommandArgs
 from .events import GroupJoinEvent, GroupLeaveEvent, WallPostEvent
@@ -18,4 +33,17 @@ __all__ = [
     "Message",
     "Update",
     "User",
+    "Audio",
+    "AudioMessage",
+    "Document",
+    "Graffiti",
+    "Link",
+    "Photo",
+    "PhotoSize",
+    "Poll",
+    "Sticker",
+    "Video",
+    "WallPost",
+    "parse_attachment",
+    "parse_attachments",
 ]
