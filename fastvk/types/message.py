@@ -5,12 +5,24 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
+from .attachments import (
+    AudioMessage,
+    Document,
+    Photo,
+    Sticker,
+    Video,
+    parse_attachments,
+)
+
 if TYPE_CHECKING:
     from ..api.client import Bot
     from ..enums.chat_action import ChatAction
     from ..enums.parse_mode import ParseMode
     from ..keyboard import Keyboard
     from .user import User
+
+
+CONTENT_TYPE_TEXT = "text"
 
 
 class Message(BaseModel):
@@ -32,7 +44,22 @@ class Message(BaseModel):
 
     @property
     def from_user(self) -> User | None:
+        """The sender, if it has been resolved (inject ``user: User`` or call
+        :meth:`get_user`). ``None`` otherwise — FastVK no longer fetches the
+        sender on every update."""
         return self._from_user
+
+    async def get_user(self, fields: str = "") -> User:
+        """Fetch and cache the sender via ``users.get``."""
+        from .user import User as _User
+
+        if self._from_user is not None and not fields:
+            return self._from_user
+        assert self._bot is not None
+        raw = await self._bot.users.get(user_ids=self.from_id, fields=fields or None)
+        user = _User.from_dict(raw[0])
+        self._from_user = user
+        return user
 
     @classmethod
     def from_dict(cls, data: dict[str, Any], bot: Bot) -> Message:
@@ -310,6 +337,95 @@ class Message(BaseModel):
             conversation_message_ids=[self.id],
             fields=fields,
         )
+
+    async def answer_media_group(
+        self,
+        attachments: list[str],
+        caption: str = "",
+        *,
+        keyboard: Keyboard | str | None = None,
+    ) -> int:
+        """Send several attachments in a single message.
+
+        ``attachments`` — list of VK attachment strings, e.g. ``["photo1_2", "doc1_3"]``.
+        """
+        assert self._bot is not None
+        return await self._bot.messages.send(
+            peer_id=self.peer_id,
+            message=caption,
+            attachment=",".join(attachments),
+            random_id=random.randint(0, 2**31),
+            keyboard=str(keyboard) if keyboard is not None else None,
+        )
+
+    async def answer_carousel(
+        self,
+        carousel: Any,
+        text: str = "",
+    ) -> int:
+        """Send a carousel template (:class:`~fastvk.keyboard.Carousel` or JSON str)."""
+        assert self._bot is not None
+        return await self._bot.messages.send(
+            peer_id=self.peer_id,
+            message=text,
+            template=str(carousel),
+            random_id=random.randint(0, 2**31),
+        )
+
+    # -- attachments ---------------------------------------------------------
+
+    @property
+    def typed_attachments(self) -> list[Any]:
+        """Attachments parsed into typed models (:class:`Photo`, :class:`Document`, …)."""
+        return parse_attachments(self.attachments)
+
+    @property
+    def content_type(self) -> str:
+        """Primary content type: ``"text"`` or the first attachment's ``type``."""
+        if self.attachments:
+            return str(self.attachments[0].get("type", "unknown"))
+        return CONTENT_TYPE_TEXT
+
+    @property
+    def content_types(self) -> set[str]:
+        """All content types present in this message."""
+        types = {str(a.get("type", "")) for a in self.attachments}
+        types.discard("")
+        if self.text:
+            types.add(CONTENT_TYPE_TEXT)
+        return types or {CONTENT_TYPE_TEXT}
+
+    def has_attachment(self, *types: str) -> bool:
+        """``True`` if the message carries an attachment of any of *types* (any if empty)."""
+        if not self.attachments:
+            return False
+        if not types:
+            return True
+        present = {str(a.get("type", "")) for a in self.attachments}
+        return bool(present & set(types))
+
+    @property
+    def photos(self) -> list[Photo]:
+        return [a for a in self.typed_attachments if isinstance(a, Photo)]
+
+    @property
+    def docs(self) -> list[Document]:
+        return [a for a in self.typed_attachments if isinstance(a, Document)]
+
+    @property
+    def videos(self) -> list[Video]:
+        return [a for a in self.typed_attachments if isinstance(a, Video)]
+
+    @property
+    def audio_messages(self) -> list[AudioMessage]:
+        return [a for a in self.typed_attachments if isinstance(a, AudioMessage)]
+
+    @property
+    def sticker(self) -> Sticker | None:
+        for a in self.typed_attachments:
+            if isinstance(a, Sticker):
+                return a
+        return None
 
     @property
     def is_private(self) -> bool:
