@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 
 from fastvk.dashboard.config import BaseDashboard, DashboardConfig
 
