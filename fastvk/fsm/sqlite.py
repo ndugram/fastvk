@@ -56,7 +56,7 @@ class SQLiteStorage(BaseStorage):
                     """
                 )
                 await self._db.commit()
-        return self._db  # type: ignore[return-value]
+        return self._db
 
     async def get_state(self, key: _Key) -> str | None:
         db = await self._conn()
