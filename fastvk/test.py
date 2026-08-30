@@ -51,12 +51,12 @@ class MockedBot(Bot):
         """Set what a given VK method call should return."""
         self._results[method] = value
 
-    async def _call(self, method: str, **kwargs: Any) -> Any:  # type: ignore[override]
+    async def _call(self, method: str, **kwargs: Any) -> Any:
         self.calls.append(MockedBot.Call(method, kwargs))
         result = self._results.get(method)
         return result() if callable(result) else result
 
-    async def close(self) -> None:  # type: ignore[override]
+    async def close(self) -> None:
         return None
 
     # -- assertions --------------------------------------------------------
