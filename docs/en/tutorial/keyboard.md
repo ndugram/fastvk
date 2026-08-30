@@ -24,6 +24,9 @@ Button.link("GitHub", url="https://github.com")
 # Location button (requests user's location)
 Button.location()
 
+# Open a VK Mini App
+Button.vkapps("Open app", app_id=1234567, hash="ref=menu")
+
 # VK Pay button
 Button.vkpay(action="pay-to-group", group_id=123, amount=100, description="Donation")
 Button.vkpay(action="transfer-to-group", group_id=123, aid=1)
@@ -121,6 +124,37 @@ Keyboard.remove()   # JSON string that removes the keyboard
 ```python
 await message.answer("Keyboard removed", keyboard=Keyboard.remove())
 ```
+
+## Carousel
+
+A carousel is a horizontally-scrollable set of cards sent via the message
+`template` parameter (inline only, up to 10 cards).
+
+```python
+from fastvk import Carousel, Button
+
+carousel = (
+    Carousel()
+    .element(
+        title="Item 1",
+        description="99 ₽",
+        photo_id="-1_2",                                   # a photo attachment id
+        buttons=[Button.callback("Buy", payload={"buy": 1})],
+        link="https://example.com/1",                       # card tap action
+    )
+    .element(title="Item 2", buttons=[Button.callback("Buy", payload={"buy": 2})])
+)
+
+await message.answer_carousel(carousel, text="Catalog")
+# or: await bot.messages.send(peer_id=..., template=str(carousel), random_id=0)
+```
+
+| `element()` parameter | Description |
+|---|---|
+| `title` / `description` | Card texts |
+| `photo_id` | Photo attachment id (`{owner}_{id}`) |
+| `buttons` | List of `Button.*` (callback / link) |
+| `link` | Tap action for the whole card (`open_link`); omitted → `open_photo` |
 
 ## Full example
 

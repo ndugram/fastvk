@@ -79,6 +79,53 @@ async def on_yes(message: Message) -> None: ...
 | `contains` | `False` | Substring match instead of exact |
 | `ignore_case` | `True` | Case-insensitive comparison |
 
+## Regexp
+
+Matches message text against a regular expression (`re.search`). The
+`re.Match` object is injected into the handler.
+
+```python
+import re
+from fastvk.filters import Regexp
+
+@bot.message(Regexp(r"^#(\d+)$"))
+async def by_ticket(message: Message, match: re.Match) -> None:
+    await message.answer(f"Ticket {match.group(1)}")
+```
+
+## ContentType / HasAttachment
+
+Match messages by attachment type.
+
+```python
+from fastvk.filters import ContentType, HasAttachment
+
+@bot.message(ContentType("photo"))
+async def on_photo(message: Message) -> None:
+    await message.answer("Nice photo!")
+
+@bot.message(ContentType("audio_message", "doc"))
+async def on_media(message: Message) -> None: ...
+
+@bot.message(HasAttachment())              # any attachment
+async def on_any_attachment(message: Message) -> None: ...
+
+@bot.message(HasAttachment("video", "wall"))
+async def on_video_or_repost(message: Message) -> None: ...
+```
+
+Pass `"text"` to `ContentType` to match plain-text messages. See
+[Attachments](attachments.md) for the typed accessors.
+
+## Command — case-insensitive
+
+```python
+@bot.message(Command("Start", "Menu", ignore_case=True))
+async def on_start(message: Message) -> None: ...   # matches /START, /menu, ...
+```
+
+Argument text keeps its original casing.
+
 ## F — magic filter
 
 `F` builds lazy attribute-based filter expressions with full IDE support.

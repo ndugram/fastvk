@@ -84,6 +84,9 @@ async def on_post(message: Message) -> None:
 @bot.message_reply()        # message_reply
 async def on_reply(...): ...
 
+@bot.message_edit()         # message_edit
+async def on_edit(...): ...
+
 @bot.message_allow()        # message_allow (newsletter opt-in)
 async def on_allow(...): ...
 
@@ -109,14 +112,52 @@ from fastvk.api.client import Bot
 @bot.message()
 async def handler(
     message: Message,   # the incoming message
-    user: User,         # sender (fetched automatically)
+    user: User,         # sender — fetched on demand, only when you ask for it
     state: FSMContext,  # FSM context for this user
     bot: Bot,           # the Bot API client
 ) -> None:
     await message.answer(f"Hi {user.first_name}!")
 ```
 
-You only declare what you need — unused params are simply not passed.
+You only declare what you need — unused params are simply not passed. In
+particular, declaring `user: User` is what triggers the single `users.get`
+call for that update; without it no sender lookup happens.
+
+A middleware can add its own injectables: anything it puts in the `data` dict
+is passed to handlers by type (see [Middleware](middleware.md)).
+
+## User Long Poll
+
+To run on a **user** token instead of a community token, pass `polling="user"`.
+Events are reshaped to look like community updates, so the same handlers work:
+
+```python
+bot = FastVK(token=USER_TOKEN, polling="user")
+
+@bot.message()
+async def on_message(message: Message) -> None:
+    ...
+
+bot.run_polling()
+```
+
+Outgoing messages the account itself sends arrive as `message_new` with
+`message.raw["out"] == 1`.
+
+## Startup / shutdown hooks
+
+```python
+@bot.startup
+async def on_start(bot: FastVK) -> None:
+    ...
+
+@bot.shutdown
+async def on_stop() -> None:
+    ...
+```
+
+Both run once, receive DI by type, and also work on any `Router`. `SIGTERM`
+and `SIGINT` trigger a graceful shutdown that drains in-flight updates.
 
 ## Handler order
 
