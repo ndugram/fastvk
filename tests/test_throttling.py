@@ -4,7 +4,6 @@ import time
 from typing import Any
 from unittest.mock import AsyncMock
 
-import pytest
 
 from fastvk.middleware.throttling import ThrottlingMiddleware
 from fastvk.types.update import Update
