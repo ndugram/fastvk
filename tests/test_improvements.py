@@ -19,8 +19,13 @@ from fastvk.router import Router
 from fastvk.scheduler import Scheduler, _parse_interval
 from fastvk.test import MockedBot, callback_update, dispatch, message_update
 from fastvk.types.attachments import Photo, parse_attachment
+from fastvk.types.callback import CallbackQuery
 from fastvk.types.message import Message
 from fastvk.types.user import User
+
+
+class Marker:
+    """Module-level type so ``get_type_hints`` can resolve it in handlers."""
 
 
 # --------------------------------------------------------------------------
@@ -84,9 +89,6 @@ class TestMiddlewareData:
     async def test_middleware_injects_value_by_type(
         self, mock_bot: MagicMock, storage: MemoryStorage
     ) -> None:
-        class Marker:
-            pass
-
         marker = Marker()
 
         class MW(BaseMiddleware):
@@ -422,7 +424,7 @@ class TestTestUtils:
         seen: list[str] = []
 
         @router.callback()
-        async def h(callback: Any) -> None:
+        async def h(callback: CallbackQuery) -> None:
             seen.append(callback.payload.get("a"))
 
         bot = MockedBot()
