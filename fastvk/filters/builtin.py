@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from pydantic import ValidationError
@@ -31,21 +32,27 @@ class Command:
     ```
     """
 
-    def __init__(self, *commands: str, prefix: str = "/") -> None:
+    def __init__(
+        self, *commands: str, prefix: str = "/", ignore_case: bool = False
+    ) -> None:
         self.prefix = prefix
+        self.ignore_case = ignore_case
         self.commands = {cmd.lstrip(prefix) for cmd in commands}
+        if ignore_case:
+            self.commands = {c.lower() for c in self.commands}
 
     def __call__(self, message: Message, data: dict) -> bool:
         if not message.text:
             return False
-        text = message.text.strip()
+        original = message.text.strip()
+        text = original.lower() if self.ignore_case else original
         for p in self.prefix:
             for cmd in self.commands:
                 if text == f"{p}{cmd}":
                     data[CommandArgs] = CommandArgs(command=cmd, args=(), text="")
                     return True
                 if text.startswith(f"{p}{cmd} ") or text.startswith(f"{p}{cmd}@"):
-                    rest = text[len(p) + len(cmd) :]
+                    rest = original[len(p) + len(cmd) :]
                     if rest.startswith("@"):
                         rest = rest.split(" ", 1)[1] if " " in rest else ""
                     arg_text = rest.strip()
@@ -240,6 +247,82 @@ class CallbackDataFilter:
 
     def __repr__(self) -> str:
         return f"CallbackDataFilter({self._callback_data_cls.__name__})"
+
+
+class Regexp:
+    """
+    Filter that matches message text against a regular expression.
+
+    The :class:`re.Match` object is injected into handlers via ``match: re.Match``.
+
+    ```python
+    @router.message(Regexp(r"^#(\\d+)$"))
+    async def by_ticket(message: Message, match: re.Match) -> None:
+        await message.answer(f"Тикет {match.group(1)}")
+    ```
+    """
+
+    def __init__(self, pattern: str | re.Pattern[str], *, flags: int = 0) -> None:
+        self._re = re.compile(pattern, flags) if isinstance(pattern, str) else pattern
+
+    def __call__(self, message: Message, data: dict) -> bool:
+        text = getattr(message, "text", None)
+        if not text:
+            return False
+        m = self._re.search(text)
+        if m is None:
+            return False
+        data[re.Match] = m
+        return True
+
+    def __repr__(self) -> str:
+        return f"Regexp({self._re.pattern!r})"
+
+
+class ContentType:
+    """
+    Filter that matches messages by attachment content type.
+
+    ```python
+    @router.message(ContentType("photo"))
+    async def on_photo(message: Message) -> None:
+        await message.answer("Красивое фото!")
+
+    @router.message(ContentType("audio_message", "doc"))
+    async def on_media(message: Message) -> None: ...
+    ```
+
+    Pass ``"text"`` to match plain-text messages with no attachments.
+    """
+
+    def __init__(self, *types: str) -> None:
+        self.types = frozenset(types)
+
+    def __call__(self, message: Message, data: dict) -> bool:
+        present = getattr(message, "content_types", None)
+        if present is None:
+            return False
+        return bool(self.types & present)
+
+    def __repr__(self) -> str:
+        return f"ContentType({set(self.types)!r})"
+
+
+class HasAttachment:
+    """Filter that passes when the message carries at least one attachment
+    (optionally of one of the given *types*)."""
+
+    def __init__(self, *types: str) -> None:
+        self.types = types
+
+    def __call__(self, message: Message, data: dict) -> bool:
+        checker = getattr(message, "has_attachment", None)
+        if checker is None:
+            return False
+        return bool(checker(*self.types))
+
+    def __repr__(self) -> str:
+        return f"HasAttachment({self.types!r})"
 
 
 def _normalize_filter(f: Any) -> Any:
