@@ -300,7 +300,7 @@ class Bot:
         total = 0
 
         while True:
-            inst = method_class(count=count, offset=offset, **kwargs)  # type: ignore[call-overload]
+            inst = method_class(count=count, offset=offset, **kwargs)  # type: ignore[call-arg]
             resp = await self(inst)
 
             if isinstance(resp, list):
