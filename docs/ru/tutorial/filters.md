@@ -79,6 +79,53 @@ async def on_yes(message: Message) -> None: ...
 | `contains` | `False` | Поиск подстроки вместо точного совпадения |
 | `ignore_case` | `True` | Без учёта регистра |
 
+## Regexp
+
+Сопоставляет текст сообщения с регулярным выражением (`re.search`). Объект
+`re.Match` внедряется в хэндлер.
+
+```python
+import re
+from fastvk.filters import Regexp
+
+@bot.message(Regexp(r"^#(\d+)$"))
+async def by_ticket(message: Message, match: re.Match) -> None:
+    await message.answer(f"Тикет {match.group(1)}")
+```
+
+## ContentType / HasAttachment
+
+Сопоставление сообщений по типу вложения.
+
+```python
+from fastvk.filters import ContentType, HasAttachment
+
+@bot.message(ContentType("photo"))
+async def on_photo(message: Message) -> None:
+    await message.answer("Красивое фото!")
+
+@bot.message(ContentType("audio_message", "doc"))
+async def on_media(message: Message) -> None: ...
+
+@bot.message(HasAttachment())              # любое вложение
+async def on_any_attachment(message: Message) -> None: ...
+
+@bot.message(HasAttachment("video", "wall"))
+async def on_video_or_repost(message: Message) -> None: ...
+```
+
+Передай `"text"` в `ContentType` для текстовых сообщений. Типизированные
+аксессоры — в разделе [Вложения](attachments.md).
+
+## Command — без учёта регистра
+
+```python
+@bot.message(Command("Start", "Menu", ignore_case=True))
+async def on_start(message: Message) -> None: ...   # ловит /START, /menu, ...
+```
+
+Текст аргументов сохраняет исходный регистр.
+
 ## F — магический фильтр
 
 `F` строит ленивые выражения на основе атрибутов с полной поддержкой IDE.

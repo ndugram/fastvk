@@ -65,6 +65,23 @@ bot.run_webhook(
 )
 ```
 
+## Эндпоинты health и metrics
+
+В режиме webhook сервер также отдаёт:
+
+| Путь | Ответ |
+|---|---|
+| `GET /health` | `{"status": "ok"}` — для балансировщиков / uptime-проверок |
+| `GET /metrics` | Текст Prometheus: `fastvk_updates_total`, `fastvk_updates_handled_total`, `fastvk_errors_total`, `fastvk_uptime_seconds`, `fastvk_inflight_updates`, `fastvk_updates_by_type_total{type="…"}` |
+
+Дашборд тоже отдаёт `/metrics`, так что polling-ботов можно скрейпить.
+
+## Повторные доставки
+
+VK повторяет событие Callback API, если не получил `"ok"` достаточно быстро.
+FastVK дедуплицирует по `event_id`, поэтому повторное событие не
+обрабатывается дважды.
+
 ## Локальная разработка через ngrok
 
 ```bash

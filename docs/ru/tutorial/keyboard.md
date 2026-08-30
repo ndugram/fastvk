@@ -24,6 +24,9 @@ Button.link("GitHub", url="https://github.com")
 # Кнопка геолокации
 Button.location()
 
+# Открыть VK Mini App
+Button.vkapps("Открыть приложение", app_id=1234567, hash="ref=menu")
+
 # Кнопка VK Pay
 Button.vkpay(action="pay-to-group", group_id=123, amount=100, description="Донат")
 Button.vkpay(action="transfer-to-group", group_id=123, aid=1)
@@ -121,6 +124,37 @@ Keyboard.remove()   # JSON строка для удаления клавиату
 ```python
 await message.answer("Клавиатура убрана", keyboard=Keyboard.remove())
 ```
+
+## Карусель
+
+Карусель — горизонтально прокручиваемый набор карточек, отправляемый через
+параметр сообщения `template` (только inline, до 10 карточек).
+
+```python
+from fastvk import Carousel, Button
+
+carousel = (
+    Carousel()
+    .element(
+        title="Товар 1",
+        description="99 ₽",
+        photo_id="-1_2",                                    # id вложения-фото
+        buttons=[Button.callback("Купить", payload={"buy": 1})],
+        link="https://example.com/1",                        # действие по тапу на карточку
+    )
+    .element(title="Товар 2", buttons=[Button.callback("Купить", payload={"buy": 2})])
+)
+
+await message.answer_carousel(carousel, text="Каталог")
+# или: await bot.messages.send(peer_id=..., template=str(carousel), random_id=0)
+```
+
+| Параметр `element()` | Описание |
+|---|---|
+| `title` / `description` | Тексты карточки |
+| `photo_id` | id вложения-фото (`{owner}_{id}`) |
+| `buttons` | Список `Button.*` (callback / link) |
+| `link` | Действие по тапу на всю карточку (`open_link`); без него — `open_photo` |
 
 ## Полный пример
 

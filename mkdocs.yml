@@ -83,16 +83,21 @@ nav:
       - en/tutorial/filters.md
       - en/tutorial/command-args.md
       - en/tutorial/message.md
+      - en/tutorial/attachments.md
       - en/tutorial/keyboard.md
       - en/tutorial/fsm.md
       - en/tutorial/routers.md
       - en/tutorial/middleware.md
+      - en/tutorial/scheduler.md
+      - en/tutorial/i18n.md
       - en/tutorial/background-tasks.md
       - en/tutorial/lifespan.md
       - en/tutorial/exceptions.md
       - en/tutorial/sqlite-storage.md
       - en/tutorial/webhook.md
       - en/tutorial/dashboard.md
+      - en/tutorial/testing.md
+      - en/tutorial/cli.md
     - Reference:
       - en/reference/index.md
       - en/reference/fastvk.md
@@ -105,6 +110,9 @@ nav:
       - en/reference/fsm.md
       - en/reference/types.md
       - en/reference/methods.md
+      - en/reference/scheduler.md
+      - en/reference/test.md
+      - en/reference/metrics.md
       - en/reference/exceptions.md
   - Русский:
     - ru/index.md
@@ -115,16 +123,21 @@ nav:
       - ru/tutorial/filters.md
       - ru/tutorial/command-args.md
       - ru/tutorial/message.md
+      - ru/tutorial/attachments.md
       - ru/tutorial/keyboard.md
       - ru/tutorial/fsm.md
       - ru/tutorial/routers.md
       - ru/tutorial/middleware.md
+      - ru/tutorial/scheduler.md
+      - ru/tutorial/i18n.md
       - ru/tutorial/background-tasks.md
       - ru/tutorial/lifespan.md
       - ru/tutorial/exceptions.md
       - ru/tutorial/sqlite-storage.md
       - ru/tutorial/webhook.md
       - ru/tutorial/dashboard.md
+      - ru/tutorial/testing.md
+      - ru/tutorial/cli.md
     - Справочник:
       - ru/reference/index.md
       - ru/reference/fastvk.md
@@ -137,6 +150,9 @@ nav:
       - ru/reference/fsm.md
       - ru/reference/types.md
       - ru/reference/methods.md
+      - ru/reference/scheduler.md
+      - ru/reference/test.md
+      - ru/reference/metrics.md
       - ru/reference/exceptions.md
 
 extra:

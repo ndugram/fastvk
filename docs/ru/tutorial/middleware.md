@@ -26,39 +26,45 @@ class LoggingMiddleware(BaseMiddleware[Message]):
 
 ## Регистрация middleware
 
-```python
-bot = FastVK(token="...", group_id=123)
+Глобально (оборачивает каждый апдейт, выполняется внутри автоматического троттлинга):
 
-bot.message.middleware(LoggingMiddleware())
-bot.callback.middleware(LoggingMiddleware())
+```python
+bot = FastVK(token="...", group_id=123, middleware=[LoggingMiddleware()])
+# или позже:
+bot.middleware(LoggingMiddleware())
 ```
 
-Или на роутере:
+На роутере (оборачивает только хэндлеры этого роутера и его под-роутеров):
 
 ```python
 router = Router()
-router.message.middleware(LoggingMiddleware())
+router.middleware(LoggingMiddleware())
 ```
 
 ## Внедрение данных в хэндлеры
 
-Middleware может добавлять значения в словарь `data`, который используется DI хэндлера:
+Всё, что middleware кладёт в словарь `data`, внедряется в хэндлеры **по типу**:
 
 ```python
-class DatabaseMiddleware(BaseMiddleware[Message]):
+class DatabaseMiddleware(BaseMiddleware):
     def __init__(self, pool) -> None:
         self.pool = pool
 
-    async def __call__(self, call_next, event: Message, data: dict) -> None:
+    async def __call__(self, call_next, event, data: dict) -> None:
         async with self.pool.acquire() as conn:
-            data["db"] = conn          # внедряется в хэндлер через DI
-            await call_next(event, data)
+            data[Connection] = conn        # ключ по типу…
+            # data["db"] = conn            # …обычный ключ тоже работает: он
+                                           #   регистрируется под type(conn)
+            return await call_next(event, data)
 
 
 @bot.message()
-async def handler(message: Message, db) -> None:
-    rows = await db.fetch("SELECT 1")
+async def handler(message: Message, conn: Connection) -> None:
+    rows = await conn.fetch("SELECT 1")
 ```
+
+Параметр сопоставляется по аннотации, поэтому аннотируй его типом значения
+(`conn: Connection`), а не просто именем.
 
 ## Встроенный троттлинг
 

@@ -22,6 +22,11 @@ Bot(
 | `storage` | `BaseStorage` | FSM хранилище. По умолчанию: `MemoryStorage()` |
 | `lifespan` | async context manager | Хук запуска/остановки |
 | `api_version` | `str` | Версия VK API. По умолчанию: `"5.199"` |
+| `timeout` | `float` | HTTP-таймаут запроса, сек. По умолчанию: `30.0` |
+| `max_retries` | `int` | Повторы для сетевых ошибок и кодов 1/6/9/10/29. По умолчанию: `3` |
+| `captcha_handler` | `async (sid, img_url) -> answer` | Решатель, вызываемый при коде ошибки 14 |
+| `max_concurrency` | `int` | Только `FastVK` — лимит параллельно обрабатываемых апдейтов (`0` = без лимита) |
+| `polling` | `"group"` \| `"user"` | Только `FastVK` — вид long poll. По умолчанию: `"group"` |
 
 ## Методы
 
@@ -103,13 +108,48 @@ user = await bot.get_user(123456)
 user = await bot.get_user(123456, fields="photo_200,city")
 ```
 
+### execute / execute_batch
+
+```python
+async def execute(self, code: str) -> Any
+async def execute_batch(self, calls: list[tuple[str, dict]]) -> list[Any]
+```
+
+`execute()` выполняет сниппет VKScript на стороне сервера. `execute_batch()`
+упаковывает до 25 вызовов API в один запрос и возвращает их результаты по порядку.
+
+```python
+results = await bot.execute_batch([
+    ("users.get", {"user_ids": 1}),
+    ("groups.getById", {"group_id": 1}),
+])
+```
+
+### download
+
+```python
+async def download(self, url: str, dest: str | Path | None = None) -> bytes
+```
+
+Скачать файл (например, URL вложения). Пишет в `dest`, если задан.
+
+### set_captcha_handler
+
+```python
+def set_captcha_handler(self, handler: Callable[[str, str], Awaitable[str]]) -> None
+```
+
+Регистрирует `(captcha_sid, captcha_img_url) -> answer`. При коде ошибки 14 VK
+неудавшийся вызов повторяется один раз с ответом.
+
 ### _call
 
 ```python
 async def _call(self, method: str, **params) -> Any
 ```
 
-Низкоуровневый API вызов. Вызывает `VKAPIError` при ответе с ошибкой.
+Низкоуровневый API вызов. Повторяет сетевые ошибки и коды 1/6/9/10/29 с
+экспоненциальной задержкой; иначе бросает `VKAPIError`.
 
 ## API пространства имён
 

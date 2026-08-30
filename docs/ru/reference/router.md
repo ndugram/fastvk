@@ -41,6 +41,39 @@ router.callback.filter(IsAdmin())
 
 Все хэндлеры этого роутера получат события только если `IsAdmin()` вернёт `True`.
 
+## Декораторы событий
+
+Кроме `@router.message` / `@router.callback`:
+
+```python
+@router.message_reply()     @router.message_allow()   @router.message_edit()
+@router.group_join()        @router.group_leave()     @router.wall_post_new()
+@router.on("photo_new")     # любой тип события по имени
+```
+
+## Middleware
+
+```python
+router.middleware(mw) -> mw
+```
+
+Регистрирует middleware, оборачивающий хэндлеры этого роутера (и его
+под-роутеров). `mw(call_next, event, data)` — тот же контракт, что и
+`BaseMiddleware`. Значения из `data` внедряются в хэндлеры по типу.
+
+## Хуки жизненного цикла
+
+```python
+@router.startup
+async def on_start(bot: FastVK) -> None: ...
+
+@router.shutdown
+async def on_stop() -> None: ...
+```
+
+Выполняются один раз при старте / остановке, с DI по типу. `FastVK` вызывает
+хуки себя и каждого включённого роутера.
+
 ## include_router
 
 ```python

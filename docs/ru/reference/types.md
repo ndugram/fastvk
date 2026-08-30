@@ -24,7 +24,18 @@ from fastvk.types import Message
 message.is_private  # bool — peer_id == from_id
 message.is_chat     # bool — peer_id > 2_000_000_000
 message.chat_id     # int | None — peer_id - 2_000_000_000 (только чаты)
-message.from_user   # User | None — получен автоматически
+message.from_user   # User | None — None, пока не разрешён (get_user / DI user: User)
+
+# типизированные вложения
+message.typed_attachments   # список типизированных моделей (dict для неизвестных типов)
+message.content_type        # "text" / "photo" / "audio_message" / ...
+message.content_types       # set[str] всего, что присутствует
+message.has_attachment("photo", "doc")  # bool
+message.photos              # list[Photo]
+message.docs                # list[Document]
+message.videos              # list[Video]
+message.audio_messages      # list[AudioMessage]
+message.sticker             # Sticker | None
 ```
 
 ### Методы
@@ -43,6 +54,9 @@ await message.answer_photo(attachment, *, caption=None, ...) -> int
 await message.answer_doc(attachment, *, caption=None, ...) -> int
 await message.answer_video(attachment, *, caption=None, ...) -> int
 await message.answer_sticker(sticker_id) -> int
+await message.answer_media_group(attachments: list[str], caption="", *, keyboard=None) -> int
+await message.answer_carousel(carousel, text="") -> int
+await message.get_user(fields="") -> User        # получить + закэшировать отправителя
 
 # вспомогательные методы чата (используют message.peer_id)
 await message.search(q, *, offset=0, count=20, date=None, fields=None) -> dict
@@ -100,16 +114,19 @@ from fastvk.types import CallbackQuery
 ### Свойства
 
 ```python
-callback.from_user  # User | None — автоматически получен из VK API
+callback.from_user  # User | None — None, пока не разрешён (объяви user: User)
 ```
 
 ### Методы
 
 ```python
-await callback.answer(text=None, *, event_data=None) -> None
+await callback.answer(text="", *, link=None, app_hash=None) -> None
+await callback.edit_message(text, *, keyboard=None, attachment=None) -> int
 ```
 
-Отправляет snackbar уведомление пользователю (или очищает его если `text=None`).
+`answer()` показывает snackbar, либо открывает ссылку (`link=`) / приложение
+сообщества (`app_hash=`). `edit_message()` редактирует сообщение, которому
+принадлежит кнопка, по его `conversation_message_id`.
 
 ## GroupJoinEvent
 
@@ -179,6 +196,33 @@ async def on_post(event: WallPostEvent, user: User | None = None) -> None:
 !!! note "Внедрение User"
     `User` автоматически внедряется для `group_join` и `group_leave` (всегда положительный `user_id`).
     Для `wall_post_new` — только когда `from_id > 0` (реальный пользователь, не сообщество).
+
+## Вложения
+
+Типизированные модели, разобранные из `message.attachments`. Импорт из `fastvk.types`.
+
+| Модель | `type` | Заметные поля |
+|---|---|---|
+| `Photo` | `photo` | `sizes: list[PhotoSize]`, `largest`, `url`, `text` |
+| `Video` | `video` | `title`, `description`, `duration` |
+| `Audio` | `audio` | `artist`, `title`, `duration`, `url` |
+| `Document` | `doc` | `title`, `size`, `ext`, `url` |
+| `AudioMessage` | `audio_message` | `duration`, `link_ogg`, `link_mp3`, `transcript` |
+| `Sticker` | `sticker` | `sticker_id`, `product_id` |
+| `Graffiti` | `graffiti` | `url`, `width`, `height` |
+| `Link` | `link` | `url`, `title`, `description` |
+| `Poll` | `poll` | `question`, `votes`, `anonymous`, `multiple` |
+| `WallPost` | `wall` | `from_id`, `to_id`, `text` |
+
+Каждая модель (кроме `Sticker`/`Link`) имеет `attachment_string`
+(`"photo-1_2"` / `"doc-1_2_key"`) и `raw` (нетронутый словарь).
+
+```python
+from fastvk.types import parse_attachment, parse_attachments
+
+photo = parse_attachment(message.attachments[0])   # один dict -> модель
+models = parse_attachments(message.attachments)    # список -> список
+```
 
 ## Update
 

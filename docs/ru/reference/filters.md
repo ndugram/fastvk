@@ -84,6 +84,34 @@ Text(contains="world")       # совпадение подстроки
 Text(startswith="!")          # совпадение с началом
 ```
 
+### Regexp
+
+```python
+from fastvk.filters import Regexp
+
+Regexp(r"^#(\d+)$")               # re.search по message.text
+Regexp(r"buy", flags=re.I)
+```
+
+Внедряет объект `re.Match` (объяви `match: re.Match` в хэндлере).
+
+### ContentType / HasAttachment
+
+```python
+from fastvk.filters import ContentType, HasAttachment
+
+ContentType("photo")                 # тип первого вложения / "text"
+ContentType("audio_message", "doc")  # любое из этих
+HasAttachment()                      # хотя бы одно вложение
+HasAttachment("video", "wall")       # любое вложение этих типов
+```
+
+### Command — ignore_case
+
+```python
+Command("Start", "Menu", ignore_case=True)   # ловит /START, /menu
+```
+
 ### CallbackDataFilter
 
 Фильтрует колбэки по типу :class:`~fastvk.CallbackData`. Автоматически распаковывает payload и инжектит типизированный объект через DI.

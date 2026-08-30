@@ -48,6 +48,21 @@ Button.location() -> Button
 
 Создаёт кнопку запроса геолокации пользователя.
 
+### Button.vkapps
+
+```python
+Button.vkapps(
+    label: str,
+    *,
+    app_id: int,
+    owner_id: int | None = None,
+    hash: str = "",
+    payload: dict | str | None = None,
+) -> ButtonDict
+```
+
+Создаёт кнопку, открывающую VK Mini App.
+
 ### Button.vkpay
 
 ```python
@@ -124,6 +139,25 @@ str(kb) -> str
 Keyboard.remove() -> str
 ```
 Вернуть JSON строку которая убирает клавиатуру из чата.
+
+## Carousel
+
+```python
+from fastvk import Carousel
+
+Carousel().element(
+    *,
+    title: str = "",
+    description: str = "",
+    photo_id: str | None = None,
+    buttons: list[ButtonDict] | None = None,
+    link: str | None = None,
+) -> Carousel
+```
+
+Собирает `template` сообщения (`type: "carousel"`, ≤ 10 элементов).
+`str(carousel)` / `carousel.build()` возвращает JSON; передай его как
+`template=` в `messages.send` или используй `message.answer_carousel(...)`.
 
 ### Пример
 

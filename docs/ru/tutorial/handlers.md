@@ -83,6 +83,9 @@ async def on_post() -> None:
 @bot.message_reply()        # message_reply
 async def on_reply(...): ...
 
+@bot.message_edit()         # message_edit
+async def on_edit(...): ...
+
 @bot.message_allow()        # message_allow (подписка на рассылку)
 async def on_allow(...): ...
 
@@ -108,14 +111,53 @@ from fastvk.api.client import Bot
 @bot.message()
 async def handler(
     message: Message,   # входящее сообщение
-    user: User,         # отправитель (подгружается автоматически)
+    user: User,         # отправитель — подгружается по требованию, только если запрошен
     state: FSMContext,  # FSM контекст для этого пользователя
     bot: Bot,           # клиент VK API
 ) -> None:
     await message.answer(f"Привет, {user.first_name}!")
 ```
 
-Объявляй только то, что нужно — лишние параметры просто не передаются.
+Объявляй только то, что нужно — лишние параметры просто не передаются. Именно
+объявление `user: User` запускает единственный вызов `users.get` для этого
+апдейта; без него запроса отправителя не происходит.
+
+Middleware может добавить свои инжектируемые объекты: всё, что он кладёт в
+словарь `data`, передаётся в хэндлеры по типу (см. [Middleware](middleware.md)).
+
+## User Long Poll
+
+Чтобы работать на **пользовательском** токене вместо токена сообщества,
+передай `polling="user"`. События приводятся к виду апдейтов сообщества,
+поэтому те же хэндлеры работают:
+
+```python
+bot = FastVK(token=USER_TOKEN, polling="user")
+
+@bot.message()
+async def on_message(message: Message) -> None:
+    ...
+
+bot.run_polling()
+```
+
+Сообщения, которые аккаунт отправляет сам, приходят как `message_new` с
+`message.raw["out"] == 1`.
+
+## Хуки запуска / остановки
+
+```python
+@bot.startup
+async def on_start(bot: FastVK) -> None:
+    ...
+
+@bot.shutdown
+async def on_stop() -> None:
+    ...
+```
+
+Оба выполняются один раз, получают DI по типу и работают на любом `Router`.
+`SIGTERM` и `SIGINT` запускают корректное завершение с дообработкой апдейтов «в полёте».
 
 ## Порядок хэндлеров
 

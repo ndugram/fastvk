@@ -25,16 +25,24 @@ await message.answer(
 
 ## Информация об отправителе
 
-`message.from_user` всегда заполнен для событий `message_new`:
+Отправитель подгружается **лениво** — FastVK больше не вызывает `users.get`
+на каждый апдейт. Запроси его явно:
 
 ```python
+# через DI — резолвится один раз, только потому что объявлен `user: User`
 @bot.message()
-async def greet(message: Message) -> None:
-    user = message.from_user
+async def greet(message: Message, user: User) -> None:
     await message.answer(f"Привет, {user.first_name} {user.last_name}!")
-    # или через DI:
-    # async def greet(message: Message, user: User) -> None:
+
+
+# или по требованию внутри хэндлера
+@bot.message()
+async def greet2(message: Message) -> None:
+    user = await message.get_user(fields="photo_200")
+    await message.answer(f"Привет, {user.first_name}!")
 ```
+
+`message.from_user` равен `None`, пока не будет разрешён одним из способов выше.
 
 ## Медиа шорткаты
 
@@ -55,9 +63,22 @@ await message.answer_sticker(9001)
 await message.forward(peer_id=another_peer_id)
 # или в тот же чат
 await message.forward()
+
+# несколько вложений одним сообщением
+await message.answer_media_group(["photo1_2", "doc1_3"], caption="Файлы")
+
+# шаблон-карусель
+from fastvk import Carousel, Button
+await message.answer_carousel(
+    Carousel().element(title="Товар", buttons=[Button.callback("Купить", payload={"id": 1})]),
+    text="Каталог",
+)
 ```
 
 Все медиа методы принимают `keyboard=`, `dont_parse_links=` и `disable_mentions=`.
+
+Входящие вложения можно читать типизированно (`message.photos`,
+`message.content_type`, …) — см. [Вложения](attachments.md).
 
 ## Редактирование и удаление
 
@@ -158,6 +179,8 @@ message.peer_id     # int — ID беседы
 message.from_id     # int — ID отправителя
 message.text        # str — текст сообщения
 message.attachments # list[dict] — вложения (raw)
+message.typed_attachments  # список типизированных моделей (Photo, Document, ...)
+message.content_type       # "text" / "photo" / "audio_message" / ...
 message.payload     # str | None — payload кнопки клавиатуры
 message.is_private  # bool — True если личное сообщение
 message.is_chat     # bool — True если групповой чат
