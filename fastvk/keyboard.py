@@ -64,6 +64,32 @@ class Button:
         return {"action": {"type": "location"}}
 
     @staticmethod
+    def vkapps(
+        label: str,
+        *,
+        app_id: int,
+        owner_id: int | None = None,
+        hash: str = "",
+        payload: dict[str, Any] | str | None = None,
+    ) -> ButtonDict:
+        """Button that opens a VK Mini App."""
+        action: dict[str, Any] = {
+            "type": "open_app",
+            "label": label,
+            "app_id": app_id,
+            "hash": hash,
+        }
+        if owner_id is not None:
+            action["owner_id"] = owner_id
+        if payload is not None:
+            action["payload"] = (
+                json.dumps(payload, ensure_ascii=False)
+                if isinstance(payload, dict)
+                else payload
+            )
+        return {"action": action}
+
+    @staticmethod
     def vkpay(
         *,
         action: Literal["pay-to-group", "transfer-to-group", "transfer-to-user"] = "pay-to-group",
@@ -157,3 +183,61 @@ class Keyboard:
     def remove() -> str:
         """JSON string that removes the keyboard from the chat."""
         return json.dumps({"buttons": [], "one_time": True})
+
+
+class Carousel:
+    """Builder for VK message carousel templates (``template`` API parameter).
+
+    ```python
+    carousel = (
+        Carousel()
+        .element(
+            title="Товар 1",
+            description="99 ₽",
+            photo_id="-1_2",
+            buttons=[Button.callback("Купить", payload={"buy": 1})],
+            link="https://example.com/1",
+        )
+        .element(title="Товар 2", buttons=[Button.callback("Купить", payload={"buy": 2})])
+    )
+    await bot.messages.send(peer_id=1, message="Каталог", template=str(carousel), random_id=0)
+    ```
+    """
+
+    def __init__(self) -> None:
+        self._elements: list[dict[str, Any]] = []
+
+    def element(
+        self,
+        *,
+        title: str = "",
+        description: str = "",
+        photo_id: str | None = None,
+        buttons: list[ButtonDict] | None = None,
+        link: str | None = None,
+    ) -> Carousel:
+        """Append one card. ``link`` sets an ``open_link`` tap action for the card."""
+        if len(self._elements) >= 10:
+            raise ValueError("a carousel holds at most 10 elements")
+        el: dict[str, Any] = {"buttons": buttons or []}
+        if title:
+            el["title"] = title
+        if description:
+            el["description"] = description
+        if photo_id is not None:
+            el["photo_id"] = photo_id
+        el["action"] = (
+            {"type": "open_link", "link": link}
+            if link is not None
+            else {"type": "open_photo"}
+        )
+        self._elements.append(el)
+        return self
+
+    def build(self) -> str:
+        return json.dumps(
+            {"type": "carousel", "elements": self._elements}, ensure_ascii=False
+        )
+
+    def __str__(self) -> str:
+        return self.build()
