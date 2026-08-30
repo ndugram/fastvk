@@ -34,6 +34,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **Full VK API method coverage** — `fastvk.methods` now ships a typed
+  `VKMethod` subclass for **every** method (~570), generated from the official
+  VK API schema by `scripts/gen_methods.py` into `fastvk/methods/_generated/`.
+  Import any by name (`from fastvk.methods import MarketGet, BoardGetTopics`);
+  they validate params, autocomplete, and work with `bot.collect()`. The
+  hand-tuned classes still take precedence. `FastVK`/`Bot` now delegate any
+  namespace (`bot.board`, `bot.market`, `bot.utils`, …). Parameter encoding
+  (`bool` → `1`/`0`, lists → CSV, `from`/`global` aliases) is automatic.
 - **Captcha handling** — `FastVK(...).bot.set_captcha_handler(async (sid, img) -> answer)`
   or `Bot(captcha_handler=...)`; the failed call is retried with the answer.
 - **`bot.execute(code)`** and **`bot.execute_batch([(method, params), ...])`**

@@ -1,3 +1,9 @@
+from __future__ import annotations
+
+from typing import Any
+
+from . import _generated
+from ._generated import GENERATED_NAMESPACES, GENERATED_REGISTRY
 from .base import VKMethod
 from .docs import DocsGetMessagesUploadServer, DocsSave
 from .groups import GroupsGetById, GroupsGetLongPollServer, GroupsGetMembers
@@ -44,7 +50,7 @@ from .wall import WallGet, WallGetById, WallPost
 
 # registry: VK method string → typed VKMethod class
 # used by _APICallable to route dynamic calls through Pydantic
-_REGISTRY: dict[str, type[VKMethod]] = {
+_HANDWRITTEN_REGISTRY: dict[str, type[VKMethod]] = {
     # messages
     "messages.send": MessagesSend,
     "messages.delete": MessagesDelete,
@@ -99,6 +105,20 @@ _REGISTRY: dict[str, type[VKMethod]] = {
     "docs.getMessagesUploadServer": DocsGetMessagesUploadServer,
     "docs.save": DocsSave,
 }
+
+# Full routing table: every method generated from the VK schema, with the
+# curated hand-written classes taking precedence where they overlap.
+_REGISTRY: dict[str, type[VKMethod]] = {**GENERATED_REGISTRY, **_HANDWRITTEN_REGISTRY}
+
+
+def __getattr__(name: str) -> Any:
+    """Expose generated method classes lazily: ``from fastvk.methods import MarketGet``."""
+    for ns in GENERATED_NAMESPACES:
+        module = getattr(_generated, ns)
+        obj = getattr(module, name, None)
+        if obj is not None:
+            return obj
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = [
     "VKMethod",

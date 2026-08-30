@@ -1,6 +1,47 @@
 # Методы
 
-Типизированные обёртки VK API методов. Все находятся в `fastvk.methods` и регистрируются в глобальном `_REGISTRY`.
+## Покрытие
+
+**Любой метод VK API вызывается.** Два слоя:
+
+1. **Динамически** — `bot.<namespace>.<method>(**params)` работает для любого
+   метода, даже не описанного здесь, через диспетчеризацию по атрибутам:
+
+   ```python
+   await bot.board.getTopics(group_id=1)
+   await bot.market.get(owner_id=-1, count=10)
+   await bot.utils.resolveScreenName(screen_name="durov")
+   await bot.storage.set(key="x", value="1")
+   ```
+
+2. **Типизированные классы** — в `fastvk.methods` есть подкласс `VKMethod` для
+   **всех ~570 методов**, сгенерированный из официальной
+   [схемы VK API](https://github.com/VKCOM/vk-api-schema), закреплённой на
+   версии API из `fastvk/__meta__.py`. Импортируй любой по имени:
+
+   ```python
+   from fastvk.methods import MarketGet, BoardGetTopics, UtilsResolveScreenName
+
+   items = await bot(MarketGet(owner_id=-1, count=10))
+   ```
+
+   Сгенерированные классы валидируют параметры через Pydantic и дают
+   автодополнение в IDE; они же используются в `bot.collect(...)`. Несколько
+   классов (`MessagesSend`, `WallGet`, …) написаны вручную и имеют приоритет.
+
+Перегенерировать после обновления версии VK API:
+
+```console
+$ python scripts/gen_methods.py     # скачивает схему, переписывает fastvk/methods/_generated/
+```
+
+Кодирование параметров делается за тебя: `bool` → `1`/`0`, `list`/`tuple` →
+CSV, зарезервированные имена (`from`, `global`) получают алиас.
+
+---
+
+Дальше на этой странице подробно описаны обёртки, написанные вручную. Все
+находятся в `fastvk.methods` и регистрируются в глобальном `_REGISTRY`.
 
 ## messages
 

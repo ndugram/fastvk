@@ -1,6 +1,47 @@
 # Methods
 
-Typed VK API method wrappers. All live in `fastvk.methods` and register in the global `_REGISTRY`.
+## Coverage
+
+**Every VK API method is callable.** Two layers:
+
+1. **Dynamic** — `bot.<namespace>.<method>(**params)` works for any method, even
+   ones not listed here, via attribute dispatch:
+
+   ```python
+   await bot.board.getTopics(group_id=1)
+   await bot.market.get(owner_id=-1, count=10)
+   await bot.utils.resolveScreenName(screen_name="durov")
+   await bot.storage.set(key="x", value="1")
+   ```
+
+2. **Typed classes** — `fastvk.methods` ships a `VKMethod` subclass for **all
+   ~570 methods**, generated from the official
+   [VK API schema](https://github.com/VKCOM/vk-api-schema) pinned to the API
+   version in `fastvk/__meta__.py`. Import any of them by name:
+
+   ```python
+   from fastvk.methods import MarketGet, BoardGetTopics, UtilsResolveScreenName
+
+   items = await bot(MarketGet(owner_id=-1, count=10))
+   ```
+
+   Generated classes validate parameters with Pydantic and give IDE
+   autocomplete; they also power `bot.collect(...)`. A handful of them
+   (`MessagesSend`, `WallGet`, …) are hand-tuned and take precedence.
+
+Regenerate after a VK API bump:
+
+```console
+$ python scripts/gen_methods.py     # downloads the schema, rewrites fastvk/methods/_generated/
+```
+
+Parameter encoding is handled for you: `bool` → `1`/`0`, `list`/`tuple` → CSV,
+reserved names (`from`, `global`) are aliased.
+
+---
+
+The rest of this page documents the hand-tuned wrappers in detail. All live in
+`fastvk.methods` and register in the global `_REGISTRY`.
 
 ## messages
 

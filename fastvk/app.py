@@ -136,6 +136,13 @@ class FastVK(Router):
         """VK API methods namespace: getMessagesUploadServer, save."""
         return self.bot.docs
 
+    def __getattr__(self, name: str) -> Any:
+        # Delegate any other VK API namespace (board, market, video, likes,
+        # friends, stories, utils, storage, …) to the underlying Bot.
+        if name.startswith("_") or name == "bot":
+            raise AttributeError(name)
+        return getattr(self.bot, name)
+
     async def get_me(self) -> Group:
         """Return info about the community this bot belongs to."""
         return await self.bot.get_me()

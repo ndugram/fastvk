@@ -47,6 +47,15 @@ _CAPTCHA_CODE = 14
 
 DEFAULT_TIMEOUT = 30.0
 
+
+def _encode_param(value: Any) -> Any:
+    """Coerce Python values into what the VK API form encoder expects."""
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (list, tuple, set)):
+        return ",".join(str(_encode_param(v)) for v in value)
+    return value
+
 # Signature of a captcha solver: receives the captcha image URL, returns the answer.
 CaptchaHandler = Callable[[str, str], Awaitable[str]]
 
@@ -132,7 +141,9 @@ class Bot:
             try:
                 session = await self._get_session()
                 params = {"access_token": self.token, "v": self._version, **kwargs}
-                params = {k: v for k, v in params.items() if v is not None}
+                params = {
+                    k: _encode_param(v) for k, v in params.items() if v is not None
+                }
                 if captcha_sid is not None and captcha_key is not None:
                     params["captcha_sid"] = captcha_sid
                     params["captcha_key"] = captcha_key
@@ -188,7 +199,7 @@ class Bot:
         raise RuntimeError("Unreachable")
 
     async def __call__(self, method: VKMethod[_T]) -> _T:
-        params = method.model_dump(exclude_none=True)
+        params = method.model_dump(by_alias=True, exclude_none=True)
         return await self._call(method.__api_method__, **params)
 
     async def execute(self, code: str) -> Any:

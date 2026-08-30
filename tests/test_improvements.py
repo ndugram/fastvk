@@ -449,3 +449,66 @@ class TestUserLongPoll:
             [4, 1, 0, 2000000001, 0, "hi", {}, {"from": "777"}]
         )
         assert upd.object["message"]["from_id"] == 777
+
+
+# --------------------------------------------------------------------------
+# 5. Generated method classes
+# --------------------------------------------------------------------------
+
+
+class TestGeneratedMethods:
+    def test_registry_covers_many_namespaces(self) -> None:
+        from fastvk.methods import _REGISTRY
+
+        assert len(_REGISTRY) > 400
+        prefixes = {k.split(".")[0] for k in _REGISTRY}
+        assert {"board", "market", "video", "likes", "utils", "storage"} <= prefixes
+
+    def test_lazy_import_of_generated_class(self) -> None:
+        from fastvk.methods import BoardGetTopics, MarketGet
+
+        assert MarketGet.__api_method__ == "market.get"
+        assert BoardGetTopics.__api_method__ == "board.getTopics"
+
+    def test_handwritten_wins_over_generated(self) -> None:
+        from fastvk.methods import _REGISTRY
+        from fastvk.methods.messages import MessagesSend as Handwritten
+
+        assert _REGISTRY["messages.send"] is Handwritten
+
+    async def test_dynamic_call_routes_through_generated(self) -> None:
+        bot = MockedBot()
+        bot.set_result("market.get", {"count": 2, "items": []})
+        out = await bot.market.get(owner_id=-1, count=2)
+        assert out["count"] == 2
+        assert bot.assert_called("market.get").params["owner_id"] == -1
+
+    async def test_typed_generated_method_call(self) -> None:
+        from fastvk.methods import UtilsResolveScreenName
+
+        bot = MockedBot()
+        bot.set_result("utils.resolveScreenName", {"type": "group", "object_id": 1})
+        res = await bot(UtilsResolveScreenName(screen_name="durov"))
+        assert res["type"] == "group"
+
+    def test_bool_and_list_encoding(self) -> None:
+        from fastvk.api.client import _encode_param
+
+        assert _encode_param(True) == 1
+        assert _encode_param(False) == 0
+        assert _encode_param([1, 2, 3]) == "1,2,3"
+        assert _encode_param(["a", "b"]) == "a,b"
+
+    def test_alias_field_dumps_reserved_name(self) -> None:
+        from fastvk.methods._generated.pages import PagesGet
+
+        inst = PagesGet(global_=True)
+        assert inst.model_dump(by_alias=True, exclude_none=True) == {"global": True}
+
+    def test_app_delegates_unknown_namespace_to_bot(self) -> None:
+        from fastvk.app import FastVK
+
+        app = FastVK(token="t", group_id=1)
+        app.bot = MockedBot()  # type: ignore[assignment]
+        callable_ = app.board.getTopics
+        assert callable_._method == "board.getTopics"

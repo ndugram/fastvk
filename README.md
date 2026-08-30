@@ -40,6 +40,7 @@ Key features:
 - **Auto-retry** — built-in exponential backoff for VK API calls (network errors, flood control, rate limits) plus optional captcha solving.
 - **Auto-pagination** — `bot.collect()` iterates paginated methods (members, posts, history) with no manual loops.
 - **Batching** — `bot.execute_batch()` packs up to 25 API calls into one request.
+- **Full API** — a typed `VKMethod` class for every VK method (~570), generated from the official schema; any namespace also works dynamically (`bot.board`, `bot.market`, …).
 - **Scheduler** — `@scheduler.every("30m")` / `@scheduler.at("09:00")` for periodic jobs.
 - **i18n** — JSON catalogs + `I18nMiddleware` with per-user locale.
 - **CLI** — `fastvk new mybot` scaffolds a project, `fastvk run` runs it.

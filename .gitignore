@@ -215,3 +215,5 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 .DS_Store
+# VK API schema cache for scripts/gen_methods.py (re-downloaded on demand)
+scripts/vendor/
