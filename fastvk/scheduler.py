@@ -131,7 +131,7 @@ class Scheduler:
                 func=func,
                 interval=seconds,
                 next_run=time.time() + seconds,
-                name=name or getattr(func, "__name__", "job"),
+                name=name or str(getattr(func, "__name__", "job")),
                 args=args,
                 kwargs=kwargs,
             )
