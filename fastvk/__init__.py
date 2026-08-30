@@ -4,14 +4,22 @@ from .app import FastVK
 from .background import BackgroundTasks
 from .router import Router
 from .api.client import Bot
-from .keyboard import Button, Keyboard
+from .keyboard import Button, Carousel, Keyboard
 from .types.callback import CallbackQuery
 from .types.group import Group
 from .filters.magic import F
-from .filters.builtin import Command, CommandHelp, CommandStart
+from .filters.builtin import (
+    Command,
+    CommandHelp,
+    CommandStart,
+    ContentType,
+    HasAttachment,
+    Regexp,
+)
 from .enums import ChatAction, Color, ParseMode
 from .upload import Uploader
 from .callback_data import CallbackData
+from .scheduler import Scheduler
 from . import enums
 from . import filters
 from . import fsm
@@ -26,6 +34,7 @@ __all__ = [
     "Bot",
     "BackgroundTasks",
     "Button",
+    "Carousel",
     "Keyboard",
     "CallbackQuery",
     "Group",
@@ -33,11 +42,15 @@ __all__ = [
     "Command",
     "CommandStart",
     "CommandHelp",
+    "ContentType",
+    "HasAttachment",
+    "Regexp",
     "ChatAction",
     "Color",
     "ParseMode",
     "Uploader",
     "CallbackData",
+    "Scheduler",
     "enums",
     "filters",
     "fsm",
