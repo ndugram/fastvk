@@ -208,7 +208,9 @@ class TestFeedUpdate:
 
         assert injected[0].first_name == "Иван"
 
-    async def test_message_from_user_set(self, mock_bot: MagicMock, make_update: Any, storage: MemoryStorage) -> None:
+    async def test_message_from_user_lazy_none_without_injection(
+        self, mock_bot: MagicMock, make_update: Any, storage: MemoryStorage
+    ) -> None:
         router = Router()
         messages: list[Message] = []
 
@@ -219,8 +221,26 @@ class TestFeedUpdate:
         update = make_update("message_new")
         await router.feed_update(update, mock_bot, storage)
 
+        # FastVK no longer fetches the sender on every update.
+        assert messages[0].from_user is None
+        mock_bot.users.get.assert_not_called()
+
+    async def test_message_from_user_set_when_user_injected(
+        self, mock_bot: MagicMock, make_update: Any, storage: MemoryStorage
+    ) -> None:
+        router = Router()
+        messages: list[Message] = []
+
+        @router.message()
+        async def handler(message: Message, user: User) -> None:
+            messages.append(message)
+
+        update = make_update("message_new")
+        await router.feed_update(update, mock_bot, storage)
+
         assert messages[0].from_user is not None
         assert messages[0].from_user.id == 123456
+        mock_bot.users.get.assert_called_once()
 
     async def test_exception_handler_catches_error(self, mock_bot: MagicMock, make_update: Any, storage: MemoryStorage) -> None:
         router = Router()
