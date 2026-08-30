@@ -556,6 +556,109 @@ async def on_photo(update: Update) -> None:
 
 </details>
 
+<details markdown="1">
+<summary>With the scheduler...</summary>
+
+```python
+from fastvk import FastVK, Scheduler
+from fastvk.types import Message
+
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
+scheduler = Scheduler()
+
+
+@scheduler.every("30m")
+async def refresh(bot: FastVK) -> None:
+    await bot.messages.send(peer_id=123, message="Прошло полчаса", random_id=0)
+
+
+@scheduler.at("09:00")
+async def morning() -> None:
+    ...
+
+
+@bot.startup
+async def _start(bot: FastVK) -> None:
+    scheduler.bind(bot)
+    await scheduler.start()
+```
+
+</details>
+
+<details markdown="1">
+<summary>With i18n...</summary>
+
+```python
+from fastvk import FastVK
+from fastvk.middleware.i18n import I18n, I18nMiddleware
+from fastvk.types import Message
+
+i18n = I18n("locales", default_locale="ru")   # locales/ru.json, locales/en.json
+bot = FastVK(token="vk1.a.YOUR_TOKEN", middleware=[I18nMiddleware(i18n)])
+
+
+@bot.message()
+async def hello(message: Message, i18n: I18n) -> None:
+    await message.answer(i18n("hello", name=message.from_id))
+```
+
+</details>
+
+<details markdown="1">
+<summary>With typed attachments...</summary>
+
+```python
+from fastvk import FastVK
+from fastvk.filters import ContentType
+from fastvk.types import Message
+
+bot = FastVK(token="vk1.a.YOUR_TOKEN")
+
+
+@bot.message(ContentType("photo"))
+async def on_photo(message: Message) -> None:
+    photo = message.photos[0]
+    await message.answer(f"Фото {photo.largest.width}px: {photo.url}")
+```
+
+</details>
+
+<details markdown="1">
+<summary>Testing handlers...</summary>
+
+```python
+from fastvk import Router
+from fastvk.filters import Command
+from fastvk.test import MockedBot, dispatch, message_update
+from fastvk.types import Message
+
+router = Router()
+
+
+@router.message(Command("ping"))
+async def ping(message: Message) -> None:
+    await message.answer("pong")
+
+
+async def test_ping() -> None:
+    bot = MockedBot()
+    assert await dispatch(router, bot, message_update("/ping"))
+    assert bot.sent_messages[0]["message"] == "pong"
+```
+
+</details>
+
+<details markdown="1">
+<summary>Command line...</summary>
+
+```console
+$ fastvk new mybot          # scaffold a project
+$ fastvk run mybot/main.py  # run it (polling)
+$ fastvk run app:bot --webhook 0.0.0.0:8080 --confirmation abc123
+```
+
+</details>
+
 ## Dashboard
 
 Enable the real-time monitoring dashboard by passing a `BaseDashboard` instance:
