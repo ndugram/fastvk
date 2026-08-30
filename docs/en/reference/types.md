@@ -54,6 +54,9 @@ await message.answer_photo(attachment, *, caption=None, ...) -> int
 await message.answer_doc(attachment, *, caption=None, ...) -> int
 await message.answer_video(attachment, *, caption=None, ...) -> int
 await message.answer_sticker(sticker_id) -> int
+await message.answer_media_group(attachments: list[str], caption="", *, keyboard=None) -> int
+await message.answer_carousel(carousel, text="") -> int
+await message.get_user(fields="") -> User        # fetch + cache the sender
 
 # conversation helpers (uses message.peer_id)
 await message.search(q, *, offset=0, count=20, date=None, fields=None) -> dict
