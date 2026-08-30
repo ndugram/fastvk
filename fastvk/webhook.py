@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import TYPE_CHECKING
 
@@ -53,7 +52,7 @@ class WebhookHandler:
                 group_id=data.get("group_id", self._app.group_id),
                 event_id=data.get("event_id", ""),
             )
-            asyncio.create_task(self._app._process_update(update))
+            self._app._spawn(update)
         except Exception as exc:
             logger.error("Webhook parse error: %s", exc)
 
