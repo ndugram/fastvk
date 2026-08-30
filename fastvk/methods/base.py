@@ -35,4 +35,4 @@ class VKMethod(BaseModel, Generic[T]):
 
     async def emit(self, bot: Bot) -> T:
         params = self.model_dump(exclude_none=True)
-        return await bot._call(self.__api_method__, **params)  # type: ignore[return-value]
+        return await bot._call(self.__api_method__, **params)
