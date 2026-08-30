@@ -24,7 +24,18 @@ from fastvk.types import Message
 message.is_private  # bool — peer_id == from_id
 message.is_chat     # bool — peer_id > 2_000_000_000
 message.chat_id     # int | None — peer_id - 2_000_000_000 (chats only)
-message.from_user   # User | None — fetched automatically
+message.from_user   # User | None — None until resolved (see get_user / user: User DI)
+
+# typed attachments
+message.typed_attachments   # list of typed models (dict for unknown types)
+message.content_type        # "text" / "photo" / "audio_message" / ...
+message.content_types       # set[str] of everything present
+message.has_attachment("photo", "doc")  # bool
+message.photos              # list[Photo]
+message.docs                # list[Document]
+message.videos              # list[Video]
+message.audio_messages      # list[AudioMessage]
+message.sticker             # Sticker | None
 ```
 
 ### Methods
