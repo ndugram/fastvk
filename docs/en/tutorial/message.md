@@ -25,16 +25,24 @@ await message.answer(
 
 ## Sender info
 
-`message.from_user` is always populated for `message_new` events:
+The sender is **fetched lazily** — FastVK no longer calls `users.get` on every
+update. Ask for it explicitly:
 
 ```python
+# via DI — resolved once, only because you declared `user: User`
 @bot.message()
-async def greet(message: Message) -> None:
-    user = message.from_user
+async def greet(message: Message, user: User) -> None:
     await message.answer(f"Hello, {user.first_name} {user.last_name}!")
-    # or via DI:
-    # async def greet(message: Message, user: User) -> None:
+
+
+# or on demand inside the handler
+@bot.message()
+async def greet2(message: Message) -> None:
+    user = await message.get_user(fields="photo_200")
+    await message.answer(f"Hello, {user.first_name}!")
 ```
+
+`message.from_user` is `None` until it has been resolved by one of the above.
 
 ## Media shortcuts
 
@@ -55,9 +63,22 @@ await message.answer_sticker(9001)
 await message.forward(peer_id=another_peer_id)
 # or to same chat
 await message.forward()
+
+# several attachments in one message
+await message.answer_media_group(["photo1_2", "doc1_3"], caption="Files")
+
+# carousel template
+from fastvk import Carousel, Button
+await message.answer_carousel(
+    Carousel().element(title="Item", buttons=[Button.callback("Buy", payload={"id": 1})]),
+    text="Catalog",
+)
 ```
 
 All media methods accept `keyboard=` and `dont_parse_links=` / `disable_mentions=`.
+
+Incoming attachments can be read as typed models (`message.photos`,
+`message.content_type`, …) — see [Attachments](attachments.md).
 
 ## Edit and delete
 
@@ -158,6 +179,8 @@ message.peer_id     # int — conversation ID
 message.from_id     # int — sender user ID
 message.text        # str — message text
 message.attachments # list[dict] — raw attachments
+message.typed_attachments  # list of typed models (Photo, Document, ...)
+message.content_type       # "text" / "photo" / "audio_message" / ...
 message.payload     # str | None — keyboard button payload
 message.is_private  # bool — True if private message (peer_id < 2B)
 message.is_chat     # bool — True if group chat
