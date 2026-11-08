@@ -32,6 +32,7 @@ class Message(BaseModel):
     date: int
     peer_id: int
     from_id: int
+    conversation_message_id: int | None = None
     text: str = ""
     attachments: list[dict[str, Any]] = Field(default_factory=list)
     reply_message: dict[str, Any] | None = None
@@ -68,6 +69,7 @@ class Message(BaseModel):
             date=data["date"],
             peer_id=data["peer_id"],
             from_id=data["from_id"],
+            conversation_message_id=data.get("conversation_message_id"),
             text=data.get("text", ""),
             attachments=data.get("attachments", []),
             reply_message=data.get("reply_message"),
@@ -331,10 +333,12 @@ class Message(BaseModel):
         fields: str | None = None,
     ) -> dict:
         """Get this message by conversation message ID."""
+        if self.conversation_message_id is None:
+            raise ValueError("conversation_message_id is not available for this message")
         assert self._bot is not None
         return await self._bot.messages.getByConversationMessageId(
             peer_id=self.peer_id,
-            conversation_message_ids=[self.id],
+            conversation_message_ids=[self.conversation_message_id],
             fields=fields,
         )
 

@@ -16,6 +16,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- Message method models accept alternative recipients and message identifiers:
+  `messages.send` supports `peer_ids` and media without text, `messages.edit`
+  accepts `cmid` (also `conversation_message_id`), and `messages.delete` accepts
+  `cmids` without global `message_ids`.
+- `CallbackQuery.edit_message()` uses the conversation message ID, and
+  `Message.get_by_conversation_message_id()` preserves and uses the incoming
+  `conversation_message_id` instead of the global `id`.
 - Filters are now evaluated with **short-circuit** semantics — the first
   failing filter stops evaluation instead of running all of them.
 - Middleware can now pass data into handlers: values placed in the middleware

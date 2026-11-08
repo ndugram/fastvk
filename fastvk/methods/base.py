@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import UnionType
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict
@@ -30,7 +31,7 @@ class VKMethod(BaseModel, Generic[T]):
     )
 
     if TYPE_CHECKING:
-        __returning__: ClassVar[type]
+        __returning__: ClassVar[type | UnionType]
         __api_method__: ClassVar[str]
 
     async def emit(self, bot: Bot) -> T:
