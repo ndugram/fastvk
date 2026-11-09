@@ -11,6 +11,7 @@ from fastvk.types import Message
 | Поле | Тип | Описание |
 |---|---|---|
 | `id` | `int` | ID сообщения |
+| `conversation_message_id` | `int \| None` | ID внутри диалога, если он присутствует в событии |
 | `date` | `int` | Unix timestamp |
 | `peer_id` | `int` | ID беседы/чата |
 | `from_id` | `int` | ID отправителя |
@@ -69,6 +70,10 @@ await message.mark_as_important(*, important=True) -> int
 await message.restore() -> int
 await message.get_by_conversation_message_id(*, fields=None) -> dict
 ```
+
+`get_by_conversation_message_id()` использует `conversation_message_id`, а не
+`id`. Если в событии нет диалогового ID, метод выбрасывает `ValueError`
+до обращения к API.
 
 ## User
 

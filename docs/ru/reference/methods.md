@@ -49,9 +49,13 @@ CSV, зарезервированные имена (`from`, `global`) получ
 
 ```python
 await bot.messages.send(
-    peer_id: int,
-    message: str,
+    peer_id: int | None = None,
+    message: str | None = None,
     *,
+    peer_ids: int | str | list[int] | None = None,
+    user_id: int | None = None,
+    chat_id: int | None = None,
+    domain: str | None = None,
     random_id: int = 0,
     keyboard: str | None = None,
     attachment: str | None = None,
@@ -62,17 +66,24 @@ await bot.messages.send(
     content_source: str | None = None,
     intent: str | None = None,
     subscribe_id: int | None = None,
-) -> int
+    template: str | None = None,
+) -> int | list[dict]
 ```
+
+Используй `peer_id` для одного диалога или `peer_ids` для нескольких
+получателей. С `peer_ids` VK возвращает список результатов по получателям,
+включая отдельные ошибки доставки. Текст можно опустить при отправке
+вложений, стикера, пересланного сообщения или карусели.
 
 ### messages.edit
 
 ```python
 await bot.messages.edit(
     peer_id: int,
-    message_id: int,
-    message: str,
+    message_id: int | None = None,
+    message: str | None = None,
     *,
+    cmid: int | None = None,
     keyboard: str | None = None,
     attachment: str | None = None,
     content_source: str | None = None,
@@ -82,18 +93,26 @@ await bot.messages.edit(
 ) -> int
 ```
 
+Передай глобальный `message_id` или диалоговый `cmid`.
+`conversation_message_id` принимается как входной алиас и отправляется в VK
+как `cmid`. Если переданы оба имени алиаса, их значения должны совпадать.
+При редактировании вложения текст можно опустить.
+
 ### messages.delete
 
 ```python
 await bot.messages.delete(
-    message_ids: int | str,
+    message_ids: int | str | list[int] | None = None,
     *,
     peer_id: int | None = None,
-    cmids: int | str | None = None,
+    cmids: int | str | list[int] | None = None,
     delete_for_all: bool = False,
     spam: bool = False,
 ) -> dict
 ```
+
+Передай глобальные `message_ids` либо `peer_id` и диалоговые `cmids`.
+Списки ID можно задавать списком Python или строкой через запятую.
 
 ### messages.restore
 
