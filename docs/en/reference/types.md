@@ -11,6 +11,7 @@ from fastvk.types import Message
 | Field | Type | Description |
 |---|---|---|
 | `id` | `int` | Message ID |
+| `conversation_message_id` | `int \| None` | ID within the conversation, when present in the update |
 | `date` | `int` | Unix timestamp |
 | `peer_id` | `int` | Conversation/chat ID |
 | `from_id` | `int` | Sender user ID |
@@ -69,6 +70,10 @@ await message.mark_as_important(*, important=True) -> int
 await message.restore() -> int
 await message.get_by_conversation_message_id(*, fields=None) -> dict
 ```
+
+`get_by_conversation_message_id()` uses `conversation_message_id`, not `id`.
+It raises `ValueError` before making an API call if the update does not
+contain a conversation message ID.
 
 ## User
 

@@ -78,7 +78,7 @@ class CallbackQuery(BaseModel):
         assert self._bot is not None
         return await self._bot.messages.edit(
             peer_id=self.peer_id,
-            conversation_message_id=self.conversation_message_id,
+            cmid=self.conversation_message_id,
             message=text,
             keyboard=str(keyboard) if keyboard is not None else None,
             attachment=attachment,

@@ -49,9 +49,13 @@ The rest of this page documents the hand-tuned wrappers in detail. All live in
 
 ```python
 await bot.messages.send(
-    peer_id: int,
-    message: str,
+    peer_id: int | None = None,
+    message: str | None = None,
     *,
+    peer_ids: int | str | list[int] | None = None,
+    user_id: int | None = None,
+    chat_id: int | None = None,
+    domain: str | None = None,
     random_id: int = 0,
     keyboard: str | None = None,
     attachment: str | None = None,
@@ -62,17 +66,24 @@ await bot.messages.send(
     content_source: str | None = None,
     intent: str | None = None,
     subscribe_id: int | None = None,
-) -> int
+    template: str | None = None,
+) -> int | list[dict]
 ```
+
+Use `peer_id` for one conversation or `peer_ids` for multiple recipients.
+With `peer_ids`, VK returns a list of per-recipient results, including any
+individual delivery errors. Text can be omitted when sending attachments,
+a sticker, a forwarded message, or a carousel.
 
 ### messages.edit
 
 ```python
 await bot.messages.edit(
     peer_id: int,
-    message_id: int,
-    message: str,
+    message_id: int | None = None,
+    message: str | None = None,
     *,
+    cmid: int | None = None,
     keyboard: str | None = None,
     attachment: str | None = None,
     content_source: str | None = None,
@@ -82,18 +93,26 @@ await bot.messages.edit(
 ) -> int
 ```
 
+Supply the global `message_id` or the conversation-scoped `cmid`.
+`conversation_message_id` is accepted as an input alias and is sent to VK as
+`cmid`. If both alias names are provided, they must have the same value.
+Text can be omitted when editing an attachment.
+
 ### messages.delete
 
 ```python
 await bot.messages.delete(
-    message_ids: int | str,
+    message_ids: int | str | list[int] | None = None,
     *,
     peer_id: int | None = None,
-    cmids: int | str | None = None,
+    cmids: int | str | list[int] | None = None,
     delete_for_all: bool = False,
     spam: bool = False,
 ) -> dict
 ```
+
+Use global `message_ids`, or supply `peer_id` and conversation-scoped `cmids`.
+The ID lists can be passed as Python lists or comma-separated strings.
 
 ### messages.restore
 

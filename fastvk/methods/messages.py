@@ -1,20 +1,25 @@
 from __future__ import annotations
 
 import random
+from typing import Any
 
-from pydantic import Field
+from pydantic import AliasChoices, Field, model_validator
 
 from .base import VKMethod
 
 
-class MessagesSend(VKMethod[int]):
-    """Send a message. Returns the sent message ID."""
+class MessagesSend(VKMethod[int | list[dict[str, Any]]]):
+    """Send a message. Returns an ID, or per-recipient results for peer_ids."""
 
-    __returning__ = int
+    __returning__ = int | list
     __api_method__ = "messages.send"
 
-    peer_id: int
-    message: str
+    peer_id: int | None = None
+    peer_ids: int | str | list[int] | None = None
+    user_id: int | None = None
+    chat_id: int | None = None
+    domain: str | None = None
+    message: str | None = None
     random_id: int = Field(default_factory=lambda: random.randint(0, 2**31))
     keyboard: str | None = None
     attachment: str | None = None
@@ -28,6 +33,7 @@ class MessagesSend(VKMethod[int]):
     content_source: str | None = None
     intent: str | None = None
     subscribe_id: int | None = None
+    template: str | None = None
 
 
 class MessagesDelete(VKMethod[dict]):
@@ -36,10 +42,10 @@ class MessagesDelete(VKMethod[dict]):
     __returning__ = dict
     __api_method__ = "messages.delete"
 
-    message_ids: int | str
+    message_ids: int | str | list[int] | None = None
     delete_for_all: int = 0
     peer_id: int | None = None
-    cmids: int | str | None = None
+    cmids: int | str | list[int] | None = None
     spam: int = 0
 
 
@@ -136,8 +142,12 @@ class MessagesEdit(VKMethod[int]):
     __api_method__ = "messages.edit"
 
     peer_id: int
-    message_id: int
-    message: str
+    message_id: int | None = None
+    cmid: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("cmid", "conversation_message_id"),
+    )
+    message: str | None = None
     attachment: str | None = None
     keyboard: str | None = None
     dont_parse_links: int | None = None
@@ -146,6 +156,16 @@ class MessagesEdit(VKMethod[int]):
     template: str | None = None
     keep_forward_messages: int = 0
     keep_snippets: int = 0
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_conversation_message_id(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "cmid" in data and "conversation_message_id" in data:
+            if data["cmid"] != data["conversation_message_id"]:
+                raise ValueError("cmid and conversation_message_id must refer to the same message")
+            data = dict(data)
+            data.pop("conversation_message_id")
+        return data
 
 
 class MessagesSetActivity(VKMethod[int]):
