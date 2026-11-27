@@ -4,7 +4,6 @@ import logging
 import os
 import sys
 
-
 R = "\033[0m"
 BOLD = "\033[1m"
 DIM  = "\033[2m"
@@ -97,9 +96,8 @@ class ColorFormatter(logging.Formatter):
         name = record.name
         msg = record.getMessage()
 
-        if record.exc_info:
-            if not record.exc_text:
-                record.exc_text = self.formatException(record.exc_info)
+        if record.exc_info and not record.exc_text:
+            record.exc_text = self.formatException(record.exc_info)
 
         if self._colored:
             ts_s   = _c(DIM, ts)
