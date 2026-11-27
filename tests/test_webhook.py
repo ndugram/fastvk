@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
 
@@ -179,7 +180,35 @@ class TestWebhookUpdateDispatch:
         client = await _make_client(handler)
 
         resp = await client.post("/", json={"type": "broken_event"})
-        assert resp.status == 200
-        assert await resp.text() == "ok"
+        assert resp.status == 400
+        assert await resp.text() == "bad request"
+        mock_app._spawn.assert_not_called()
 
+        await client.close()
+
+
+@pytest.mark.parametrize("payload", [[], None, "text", {}, {"type": "message_new", "object": []}])
+async def test_invalid_payload_returns_bad_request_without_dispatch(payload: object) -> None:
+    mock_app = _make_app_mock()
+    handler = WebhookHandler(mock_app, confirmation_token="tok")
+    client = await _make_client(handler)
+    try:
+        response = await client.post("/", json=payload)
+        assert response.status == 400
+        assert await response.text() == "bad request"
+        mock_app._spawn.assert_not_called()
+    finally:
+        await client.close()
+
+
+async def test_dispatch_failure_is_not_acknowledged_as_success() -> None:
+    mock_app = _make_app_mock()
+    mock_app._spawn.side_effect = RuntimeError("dispatch failed")
+    handler = WebhookHandler(mock_app, confirmation_token="tok")
+    client = await _make_client(handler)
+    try:
+        response = await client.post("/", json={"type": "message_new", "object": {}})
+        assert response.status == 503
+        assert await response.text() == "processing failed"
+    finally:
         await client.close()
