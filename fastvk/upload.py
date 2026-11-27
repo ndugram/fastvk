@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import mimetypes
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING, BinaryIO, Literal
 
 import aiohttp
 
-from ._files import open_file, read_chunks, run_io
+from ._files import StreamingFilePayload, open_file, remaining_size, run_io
 from .methods.docs import DocsGetMessagesUploadServer, DocsSave
 from .methods.photos import PhotosGetMessagesUploadServer, PhotosSaveMessagesPhoto
 
@@ -15,21 +14,6 @@ if TYPE_CHECKING:
     from .api.client import Bot
 
 UploadType = Literal["photo", "document", "audio_message", "graffiti"]
-
-
-class _StreamingFilePayload(aiohttp.payload.AsyncIterablePayload):
-    def __init__(self, stream: BinaryIO, size: int | None) -> None:
-        super().__init__(read_chunks(stream))
-        self._size = size
-
-
-def _remaining_size(stream: BinaryIO) -> int | None:
-    if not stream.seekable():
-        return None
-    position = stream.tell()
-    end = stream.seek(0, os.SEEK_END)
-    stream.seek(position)
-    return max(0, end - position)
 
 
 class Uploader:
@@ -267,7 +251,7 @@ class Uploader:
         form_data = aiohttp.FormData()
         form_data.add_field(
             field_name,
-            _StreamingFilePayload(stream, await run_io(lambda: _remaining_size(stream))),
+            StreamingFilePayload(stream, await run_io(lambda: remaining_size(stream))),
             filename=filename,
             content_type=mimetypes.guess_type(filename)[0] or "application/octet-stream",
         )
