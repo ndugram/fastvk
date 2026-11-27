@@ -13,7 +13,7 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from fastvk import FastVK, Bot, Button, CallbackQuery, Keyboard, Router
+from fastvk import Bot, Button, CallbackQuery, FastVK, Keyboard, Router
 from fastvk.filters import Command, FromUser, IsChat, StateFilter, Text
 from fastvk.fsm import FSMContext, State, StatesGroup
 from fastvk.middleware import BaseMiddleware

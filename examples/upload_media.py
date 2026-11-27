@@ -5,11 +5,13 @@ This example demonstrates how to use the Uploader class to upload
 various types of media files to VK messages.
 """
 
+import logging
+
 from fastvk import FastVK, Uploader
 from fastvk.filters import Command
 from fastvk.types import Message
 
-
+logger = logging.getLogger(__name__)
 bot = FastVK(token="vk1.a.YOUR_TOKEN")
 uploader = Uploader(bot.bot)
 
@@ -27,6 +29,7 @@ async def send_photo(message: Message) -> None:
     except FileNotFoundError:
         await message.answer("Файл не найден. Убедитесь, что путь правильный.")
     except Exception as e:
+        logger.exception("Photo upload failed")
         await message.answer(f"Ошибка загрузки: {e}")
 
 
@@ -43,6 +46,7 @@ async def send_document(message: Message) -> None:
     except FileNotFoundError:
         await message.answer("Файл не найден.")
     except Exception as e:
+        logger.exception("Document upload failed")
         await message.answer(f"Ошибка: {e}")
 
 
@@ -60,6 +64,7 @@ async def send_voice(message: Message) -> None:
     except FileNotFoundError:
         await message.answer("Аудиофайл не найден.")
     except Exception as e:
+        logger.exception("Voice upload failed")
         await message.answer(f"Ошибка: {e}")
 
 
@@ -75,6 +80,7 @@ async def send_graffiti(message: Message) -> None:
     except FileNotFoundError:
         await message.answer("Файл не найден.")
     except Exception as e:
+        logger.exception("Graffiti upload failed")
         await message.answer(f"Ошибка: {e}")
 
 
@@ -98,6 +104,7 @@ async def send_multiple(message: Message) -> None:
             random_id=0
         )
     except Exception as e:
+        logger.exception("Multiple attachment upload failed")
         await message.answer(f"Ошибка: {e}")
 
 
@@ -119,6 +126,7 @@ async def send_from_bytes(message: Message) -> None:
         )
         await message.answer_doc(attachment, caption="Файл из памяти!")
     except Exception as e:
+        logger.exception("In-memory upload failed")
         await message.answer(f"Ошибка: {e}")
 
 

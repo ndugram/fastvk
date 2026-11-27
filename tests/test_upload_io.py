@@ -64,7 +64,7 @@ async def test_upload_reads_file_outside_event_loop_and_closes_it(
         async with TestServer(application) as server:
             with monkeypatch.context() as patch:
                 patch.setattr("builtins.open", checked_open)
-                patch.setattr(io, "open", checked_open)
+                patch.setattr(Path, "open", checked_open)
                 result = await Uploader(bot)._upload_file(
                     str(server.make_url("/")),
                     str(path) if use_string_path else path,

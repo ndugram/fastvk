@@ -41,7 +41,7 @@ SCHEMA_URL = (
 
 def _download_schema(dest: Path) -> None:
     print(f"downloading VK API schema {SCHEMA_TAG} …")
-    with urllib.request.urlopen(SCHEMA_URL, timeout=60) as resp:  # noqa: S310
+    with urllib.request.urlopen(SCHEMA_URL, timeout=60) as resp:
         raw = resp.read()
     dest.mkdir(parents=True, exist_ok=True)
     with tarfile.open(fileobj=io.BytesIO(raw), mode="r:gz") as tar:
@@ -51,9 +51,9 @@ def _download_schema(dest: Path) -> None:
                 continue
             member.name = rel[1]
             try:
-                tar.extract(member, dest, filter="data")  # noqa: S202
+                tar.extract(member, dest, filter="data")
             except TypeError:  # Python < 3.12 has no `filter=`
-                tar.extract(member, dest)  # noqa: S202
+                tar.extract(member, dest)
 
 # field names that would shadow a pydantic BaseModel attribute
 _SHADOW = {
