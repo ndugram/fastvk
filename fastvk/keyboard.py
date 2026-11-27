@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from .enums.color import Color
 
-ButtonColor = Union[Color, str]
+ButtonColor = Color | str
 ButtonDict = dict[str, Any]
 
 

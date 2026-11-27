@@ -51,7 +51,7 @@ class Command:
                 if text == f"{p}{cmd}":
                     data[CommandArgs] = CommandArgs(command=cmd, args=(), text="")
                     return True
-                if text.startswith(f"{p}{cmd} ") or text.startswith(f"{p}{cmd}@"):
+                if text.startswith((f"{p}{cmd} ", f"{p}{cmd}@")):
                     rest = original[len(p) + len(cmd) :]
                     if rest.startswith("@"):
                         rest = rest.split(" ", 1)[1] if " " in rest else ""
@@ -204,9 +204,7 @@ class IsChat:
     def __call__(self, message: Message, data: dict) -> bool:
         if self._PRIVATE in self.types and message.is_private:
             return True
-        if self._CHAT in self.types and message.is_chat:
-            return True
-        return False
+        return bool(self._CHAT in self.types and message.is_chat)
 
     def __repr__(self) -> str:
         return f"IsChat({set(self.types)!r})"
