@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 
-from fastvk import FastVK, Bot
+from fastvk import Bot, FastVK
 from fastvk.filters import Command
 from fastvk.types import Message, User
 
