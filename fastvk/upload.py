@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import mimetypes
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING, BinaryIO, Literal
 
 import aiohttp
 
+from ._files import open_file, read_chunks, run_io
 from .methods.docs import DocsGetMessagesUploadServer, DocsSave
 from .methods.photos import PhotosGetMessagesUploadServer, PhotosSaveMessagesPhoto
 
@@ -13,6 +15,21 @@ if TYPE_CHECKING:
     from .api.client import Bot
 
 UploadType = Literal["photo", "document", "audio_message", "graffiti"]
+
+
+class _StreamingFilePayload(aiohttp.payload.AsyncIterablePayload):
+    def __init__(self, stream: BinaryIO, size: int | None) -> None:
+        super().__init__(read_chunks(stream))
+        self._size = size
+
+
+def _remaining_size(stream: BinaryIO) -> int | None:
+    if not stream.seekable():
+        return None
+    position = stream.tell()
+    end = stream.seek(0, os.SEEK_END)
+    stream.seek(position)
+    return max(0, end - position)
 
 
 class Uploader:
@@ -228,38 +245,33 @@ class Uploader:
         :param field_name: Form field name (photo/file)
         :return: JSON response from upload server
         """
-        session = await self.bot._get_session()
-
-        # Determine if file is a path or file-like object
         if isinstance(file, (str, Path)):
             file_path = Path(file)
-            if not file_path.exists():
-                raise FileNotFoundError(f"File not found: {file_path}")
+            async with open_file(lambda: file_path.open("rb")) as stream:
+                return await self._post_file(
+                    upload_url, stream, filename or file_path.name, field_name,
+                )
 
-            actual_filename = filename or file_path.name
-            mime_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+        if filename is None:
+            raise ValueError("filename is required when uploading from file-like object")
+        return await self._post_file(upload_url, file, filename, field_name)
 
-            with open(file_path, "rb") as f:
-                file_data = f.read()
-        else:
-            # File-like object
-            if filename is None:
-                raise ValueError("filename is required when uploading from file-like object")
-
-            actual_filename = filename
-            mime_type = mimetypes.guess_type(actual_filename)[0] or "application/octet-stream"
-            file_data = file.read()
-
-        # Prepare multipart form data
+    async def _post_file(
+        self,
+        upload_url: str,
+        stream: BinaryIO,
+        filename: str,
+        field_name: str,
+    ) -> dict:
+        session = await self.bot._get_session()
         form_data = aiohttp.FormData()
         form_data.add_field(
             field_name,
-            file_data,
-            filename=actual_filename,
-            content_type=mime_type,
+            _StreamingFilePayload(stream, await run_io(lambda: _remaining_size(stream))),
+            filename=filename,
+            content_type=mimetypes.guess_type(filename)[0] or "application/octet-stream",
         )
 
-        # Upload to VK server
         async with session.post(upload_url, data=form_data) as resp:
             if resp.status != 200:
                 raise RuntimeError(f"Upload failed with status {resp.status}: {await resp.text()}")
