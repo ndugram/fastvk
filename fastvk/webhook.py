@@ -4,6 +4,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from aiohttp import web
+from pydantic import ValidationError
 
 from .types.update import Update
 
@@ -34,8 +35,11 @@ class WebhookHandler:
 
     async def handle(self, request: web.Request) -> web.Response:
         try:
-            data: dict = await request.json()
-        except Exception:
+            data = await request.json()
+        except ValueError:
+            return web.Response(text="bad request", status=400)
+
+        if not isinstance(data, dict):
             return web.Response(text="bad request", status=400)
 
         if self._secret and data.get("secret") != self._secret:
@@ -52,8 +56,14 @@ class WebhookHandler:
                 group_id=data.get("group_id", self._app.group_id),
                 event_id=data.get("event_id", ""),
             )
-            self._app._spawn(update)
-        except Exception as exc:
+        except (KeyError, TypeError, ValidationError) as exc:
             logger.error("Webhook parse error: %s", exc)
+            return web.Response(text="bad request", status=400)
+
+        try:
+            self._app._spawn(update)
+        except Exception:
+            logger.exception("Webhook dispatch failed")
+            return web.Response(text="processing failed", status=503)
 
         return web.Response(text="ok")

@@ -110,12 +110,13 @@ class UserLongPoller:
 
             except (asyncio.CancelledError, KeyboardInterrupt):
                 return
-            except Exception as exc:
-                logger.error("User Long Poll error: %s", exc)
+            except Exception:
+                logger.exception("User Long Poll error")
                 await asyncio.sleep(1)
                 try:
                     server, key, ts = await self._get_server()
                 except Exception:
+                    logger.exception("Failed to refresh User Long Poll server")
                     await asyncio.sleep(5)
 
 

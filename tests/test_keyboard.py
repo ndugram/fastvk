@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import json
 
-
-from fastvk.keyboard import Button, Keyboard
 from fastvk.enums.color import Color
+from fastvk.keyboard import Button, Keyboard
 
 
 class TestButton:

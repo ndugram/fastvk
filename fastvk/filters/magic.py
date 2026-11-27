@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import re
 from typing import Any
 
@@ -13,7 +14,7 @@ def _resolve(event: Any, path: tuple[str, ...]) -> Any:
 
 
 class _BaseFilter:
-    def __call__(self, event: Any, context: dict) -> bool:  # noqa: ARG002
+    def __call__(self, event: Any, context: dict) -> bool:
         raise NotImplementedError
 
     def __and__(self, other: _BaseFilter) -> _AndFilter:
@@ -27,14 +28,14 @@ class _BaseFilter:
 
 
 class _OpFilter(_BaseFilter):
-    __slots__ = ("_path", "_op", "_value")
+    __slots__ = ("_op", "_path", "_value")
 
     def __init__(self, path: tuple[str, ...], op: str, value: Any) -> None:
         self._path = path
         self._op = op
         self._value = value
 
-    def __call__(self, event: Any, context: dict) -> bool:  # noqa: ARG002
+    def __call__(self, event: Any, context: dict) -> bool:
         v = _resolve(event, self._path)
         if self._op == "==":
             return bool(v == self._value)
@@ -153,7 +154,7 @@ class MagicFilter(_BaseFilter):
         """Match if the string field matches the regular expression."""
         return _OpFilter(self._path, "regexp", pattern)
 
-    def __call__(self, event: Any, context: dict) -> bool:  # noqa: ARG002
+    def __call__(self, event: Any, context: dict) -> bool:
         return bool(_resolve(event, self._path))
 
 
