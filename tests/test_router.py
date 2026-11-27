@@ -6,9 +6,9 @@ from unittest.mock import MagicMock
 import pytest
 
 from fastvk.exceptions import VKAPIError
+from fastvk.filters.builtin import Command
 from fastvk.fsm.context import FSMContext
 from fastvk.fsm.storage import MemoryStorage
-from fastvk.filters.builtin import Command
 from fastvk.router import Router, _get_params, _resolve_kwargs
 from fastvk.types.message import Message
 from fastvk.types.update import Update

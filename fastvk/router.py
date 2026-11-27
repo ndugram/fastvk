@@ -31,6 +31,7 @@ def _get_params(fn: Callable[..., Any]) -> list[tuple[str, Any]]:
     try:
         hints = get_type_hints(fn)
     except Exception:
+        logger.debug("Cannot resolve handler type hints: %r", fn, exc_info=True)
         hints = {}
     result = [(name, hints.get(name)) for name in inspect.signature(fn).parameters]
     _sig_cache[fn] = result
@@ -334,6 +335,7 @@ class Router:
                 raw = await bot.users.get(user_ids=uid)
                 return User.from_dict(raw[0])
             except Exception:
+                logger.warning("Cannot load VK user %s", uid, exc_info=True)
                 return None
 
         if update.type in ("message_new", "message_reply", "message_edit"):
