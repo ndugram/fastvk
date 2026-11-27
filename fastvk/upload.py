@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import mimetypes
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO, Literal
+from typing import TYPE_CHECKING, Any, BinaryIO, Literal
 
 import aiohttp
 
@@ -13,6 +13,12 @@ if TYPE_CHECKING:
     from .api.client import Bot
 
 UploadType = Literal["photo", "document", "audio_message", "graffiti"]
+
+
+def _attachment_string(prefix: str, media: dict[str, Any]) -> str:
+    attachment = f"{prefix}{media['owner_id']}_{media['id']}"
+    access_key = media.get("access_key")
+    return f"{attachment}_{access_key}" if access_key else attachment
 
 
 class Uploader:
@@ -63,7 +69,7 @@ class Uploader:
         :param peer_id: Destination peer ID (user or chat)
         :param file: Path to image file, or file-like object
         :param filename: Custom filename (required if ``file`` is a file-like object)
-        :return: Attachment string like ``photo123456_789012``
+        :return: Attachment string like ``photo123456_789012``, including ``access_key`` if present
 
         ```python
         # From file path
@@ -92,7 +98,7 @@ class Uploader:
             raise ValueError("Failed to save photo: empty response from VK")
 
         photo = photos[0]
-        return f"photo{photo['owner_id']}_{photo['id']}"
+        return _attachment_string("photo", photo)
 
     async def document(
         self,
@@ -110,7 +116,7 @@ class Uploader:
         :param filename: Custom filename (required if ``file`` is a file-like object)
         :param title: Document title (visible to user). If not provided, uses filename.
         :param tags: Space-separated tags for search
-        :return: Attachment string like ``doc123456_789012``
+        :return: Attachment string like ``doc123456_789012``, including ``access_key`` if present
 
         ```python
         attachment = await uploader.document(
@@ -140,7 +146,7 @@ class Uploader:
         if not doc:
             raise ValueError(f"Failed to save document: unexpected response format {result}")
 
-        return f"doc{doc['owner_id']}_{doc['id']}"
+        return _attachment_string("doc", doc)
 
     async def audio_message(
         self,
@@ -157,7 +163,7 @@ class Uploader:
         :param peer_id: Destination peer ID
         :param file: Path to audio file (OGG/Opus recommended), or file-like object
         :param filename: Custom filename (required if ``file`` is a file-like object)
-        :return: Attachment string like ``doc123456_789012``
+        :return: Attachment string like ``doc123456_789012``, including ``access_key`` if present
 
         ```python
         voice = await uploader.audio_message(peer_id=123, file="voice.ogg")
@@ -177,7 +183,7 @@ class Uploader:
         if not audio_msg:
             raise ValueError(f"Failed to save audio message: unexpected response {result}")
 
-        return f"doc{audio_msg['owner_id']}_{audio_msg['id']}"
+        return _attachment_string("doc", audio_msg)
 
     async def graffiti(
         self,
@@ -191,7 +197,7 @@ class Uploader:
         :param peer_id: Destination peer ID
         :param file: Path to PNG file with transparent background, or file-like object
         :param filename: Custom filename (required if ``file`` is a file-like object)
-        :return: Attachment string like ``doc123456_789012``
+        :return: Attachment string like ``doc123456_789012``, including ``access_key`` if present
 
         ```python
         graffiti = await uploader.graffiti(peer_id=123, file="drawing.png")
@@ -210,7 +216,7 @@ class Uploader:
         if not graffiti_obj:
             raise ValueError(f"Failed to save graffiti: unexpected response {result}")
 
-        return f"doc{graffiti_obj['owner_id']}_{graffiti_obj['id']}"
+        return _attachment_string("doc", graffiti_obj)
 
     async def _upload_file(
         self,

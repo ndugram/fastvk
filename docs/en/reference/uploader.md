@@ -6,6 +6,12 @@ from fastvk import Uploader
 
 Module for uploading media files (photos, documents, audio messages, graffiti) to VK messages.
 
+All methods preserve a non-empty `access_key` returned by VK in the attachment
+string, for example `photo123456_789012_key` or `doc123456_789012_key`.
+When no key is returned, the format remains `photo123456_789012` or
+`doc123456_789012`. Store and reuse the complete returned string, including
+the key, when sending the attachment again.
+
 ## Initialization
 
 ```python

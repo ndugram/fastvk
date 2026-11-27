@@ -24,7 +24,8 @@ class DocsSave(VKMethod[dict]):
     Save a document uploaded via :class:`DocsGetMessagesUploadServer`.
 
     Returns dict with ``type`` and the saved object (``doc`` or ``audio_message``).
-    Build the attachment string: ``f"doc{doc['owner_id']}_{doc['id']}"``.
+    Build the attachment string: ``f"doc{doc['owner_id']}_{doc['id']}"``,
+    appending ``_{access_key}`` when the saved object includes a non-empty key.
     """
 
     __returning__ = dict
