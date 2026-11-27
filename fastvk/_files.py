@@ -48,6 +48,6 @@ async def read_chunks(stream: BinaryIO) -> AsyncIterator[bytes]:
 
 
 class StreamingFilePayload(aiohttp.payload.AsyncIterablePayload):
-    def __init__(self, stream: BinaryIO, size: int | None) -> None:
-        super().__init__(read_chunks(stream))
+    def __init__(self, stream: BinaryIO, size: int | None, *, content_type: str) -> None:
+        super().__init__(read_chunks(stream), content_type=content_type)
         self._size = size

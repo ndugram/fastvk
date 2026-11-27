@@ -248,12 +248,15 @@ class Uploader:
         field_name: str,
     ) -> dict:
         session = await self.bot._get_session()
+        mime_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
         form_data = aiohttp.FormData()
         form_data.add_field(
             field_name,
-            StreamingFilePayload(stream, await run_io(lambda: remaining_size(stream))),
+            StreamingFilePayload(
+                stream, await run_io(lambda: remaining_size(stream)), content_type=mime_type,
+            ),
             filename=filename,
-            content_type=mimetypes.guess_type(filename)[0] or "application/octet-stream",
+            content_type=mime_type,
         )
 
         async with session.post(upload_url, data=form_data) as resp:
