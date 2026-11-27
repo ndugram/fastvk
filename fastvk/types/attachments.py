@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 
 class _Attachment(BaseModel):
@@ -158,7 +158,7 @@ def parse_attachment(item: dict[str, Any]) -> Any:
     payload["raw"] = body
     try:
         return model.model_validate(payload)
-    except Exception:
+    except ValidationError:
         return item
 
 
@@ -167,16 +167,16 @@ def parse_attachments(items: list[dict[str, Any]]) -> list[Any]:
 
 
 __all__ = [
-    "Photo",
-    "PhotoSize",
-    "Video",
     "Audio",
-    "Document",
     "AudioMessage",
-    "Sticker",
+    "Document",
     "Graffiti",
     "Link",
+    "Photo",
+    "PhotoSize",
     "Poll",
+    "Sticker",
+    "Video",
     "WallPost",
     "parse_attachment",
     "parse_attachments",

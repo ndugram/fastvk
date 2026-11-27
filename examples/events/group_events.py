@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import os
 
-from fastvk import FastVK, Bot
-from fastvk.types import Update, GroupJoinEvent, GroupLeaveEvent, WallPostEvent, User
+from fastvk import Bot, FastVK
+from fastvk.types import GroupJoinEvent, GroupLeaveEvent, Update, User, WallPostEvent
 
 bot = FastVK(token=os.environ["VK_TOKEN"], group_id=int(os.environ["VK_GROUP_ID"]))
 

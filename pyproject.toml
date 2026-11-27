@@ -38,6 +38,7 @@ requires-python = ">=3.10"
 dependencies = [
     "aiohttp>=3.9.0",
     "pydantic>=2.13.4",
+    "typing-extensions>=4.14.1",
 ]
 
 [project.scripts]
@@ -117,6 +118,7 @@ markers = [
     "integration: marks tests as integration tests",
 ]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.run]
 source = ["fastvk"]

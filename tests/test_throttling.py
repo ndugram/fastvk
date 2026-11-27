@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import time
+import asyncio
 from typing import Any
 from unittest.mock import AsyncMock
-
 
 from fastvk.middleware.throttling import ThrottlingMiddleware
 from fastvk.types.update import Update
@@ -37,7 +36,7 @@ class TestThrottlingMiddleware:
         mw = ThrottlingMiddleware(rate=0.05)
         handler = AsyncMock(return_value="ok")
         await mw(handler, _update(1), {})
-        time.sleep(0.06)
+        await asyncio.sleep(0.06)
         result = await mw(handler, _update(1), {})
         assert result == "ok"
         assert handler.await_count == 2
