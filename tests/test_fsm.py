@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from fastvk.fsm.context import FSMContext
 from fastvk.fsm.state import State, StatesGroup
 from fastvk.fsm.storage import MemoryStorage

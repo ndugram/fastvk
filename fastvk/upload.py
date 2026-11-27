@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import mimetypes
 from pathlib import Path
 from typing import TYPE_CHECKING, BinaryIO, Literal
@@ -239,8 +240,7 @@ class Uploader:
             actual_filename = filename or file_path.name
             mime_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
 
-            with open(file_path, "rb") as f:
-                file_data = f.read()
+            file_data = await asyncio.to_thread(file_path.read_bytes)
         else:
             # File-like object
             if filename is None:

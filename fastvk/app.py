@@ -8,28 +8,26 @@ import signal
 import time
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
-from aiohttp import web
-
-
 from typing import TYPE_CHECKING, Any
+
+from aiohttp import web
 
 from .api.client import Bot
 from .types.group import Group
 
 if TYPE_CHECKING:
     from .api.client import _APIMethod
+from .dashboard.config import BaseDashboard
+from .dashboard.server import Dashboard
 from .fsm.storage import BaseStorage, MemoryStorage
+from .logging import setup_logging
 from .middleware.base import BaseMiddleware, MiddlewareManager
 from .middleware.throttling import ThrottlingMiddleware
 from .polling.longpoll import LongPoller
 from .polling.userlongpoll import UserLongPoller
 from .router import Router
 from .types.update import Update
-from .logging import setup_logging
-from .dashboard.server import Dashboard
-from .dashboard.config import BaseDashboard
 from .webhook import WebhookHandler
-
 
 logger = logging.getLogger("fastvk")
 
@@ -82,7 +80,8 @@ class FastVK(Router):
             asyncio.Semaphore(max_concurrency) if max_concurrency > 0 else None
         )
         self._stopping = asyncio.Event()
-        self._seen_events: collections.OrderedDict[str, None] = collections.OrderedDict()
+        self._seen_events: collections.OrderedDict[tuple[int, str], None] = collections.OrderedDict()
+        self._inflight_events: dict[tuple[int, str], asyncio.Future[None]] = {}
 
         if middleware is None:
             _mw: list[BaseMiddleware] = []
@@ -96,7 +95,7 @@ class FastVK(Router):
         self.middleware_manager = MiddlewareManager(_mw)
 
     @property
-    def uploader(self) -> Any:  # noqa: ANN401
+    def uploader(self) -> Any:
         """Lazy :class:`~fastvk.upload.Uploader` bound to this bot."""
         from .upload import Uploader
 
@@ -180,20 +179,18 @@ class FastVK(Router):
         self.middleware_manager.register(mw)
         return mw
 
-    def _is_duplicate(self, event_id: str) -> bool:
-        if not event_id:
-            return False
-        if event_id in self._seen_events:
-            return True
-        self._seen_events[event_id] = None
-        if len(self._seen_events) > 10_000:
-            self._seen_events.popitem(last=False)
-        return False
-
     async def _process_update(self, update: Update) -> None:
-        if self._is_duplicate(update.event_id):
-            logger.debug("↺ %s  [duplicate event_id=%s]", update.type, update.event_id)
-            return
+        key = (update.group_id, update.event_id) if update.event_id else None
+        completion: asyncio.Future[None] | None = None
+        if key is not None:
+            if key in self._seen_events:
+                logger.debug("↺ %s  [duplicate event_id=%s]", update.type, update.event_id)
+                return
+            if key in self._inflight_events:
+                await asyncio.shield(self._inflight_events[key])
+                return
+            completion = asyncio.get_running_loop().create_future()
+            self._inflight_events[key] = completion
         logger.debug("← %s", update.type)
         self._stats["total"] += 1
         self._stats["by_type"][update.type] = (
@@ -212,11 +209,27 @@ class FastVK(Router):
                 self._stats["handled"] += 1
             else:
                 logger.debug("← %s  [no handler]", update.type)
-        except Exception:
+        except Exception as error:
             self._stats["errors"] += 1
             logger.exception("Update processing failed: %s", update.type)
+            if completion is not None:
+                completion.set_exception(error)
+                completion.exception()
+            raise
+        else:
+            if key is not None:
+                self._seen_events[key] = None
+                if len(self._seen_events) > 10_000:
+                    self._seen_events.popitem(last=False)
+                assert completion is not None
+                completion.set_result(None)
+        finally:
+            if key is not None:
+                self._inflight_events.pop(key, None)
+                if completion is not None and not completion.done():
+                    completion.cancel()
 
-    def _spawn(self, update: Update) -> None:
+    def _spawn(self, update: Update) -> asyncio.Task[None]:
         async def _guarded() -> None:
             if self._sem is not None:
                 async with self._sem:
@@ -226,18 +239,24 @@ class FastVK(Router):
 
         task = asyncio.create_task(_guarded())
         self._tasks.add(task)
-        task.add_done_callback(self._tasks.discard)
+
+        def finished(completed: asyncio.Task[None]) -> None:
+            self._tasks.discard(completed)
+            if not completed.cancelled():
+                completed.exception()
+
+        task.add_done_callback(finished)
+        return task
 
     async def _drain(self, timeout: float = 10.0) -> None:
         if not self._tasks:
             return
         logger.info("Waiting for %d in-flight update(s)…", len(self._tasks))
-        with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(
-                asyncio.gather(*self._tasks, return_exceptions=True), timeout
-            )
-        for t in self._tasks:
-            t.cancel()
+        tasks = tuple(self._tasks)
+        _, pending = await asyncio.wait(tasks, timeout=max(0, timeout))
+        for task in pending:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     async def _resolve_group_id(self) -> None:
         if not self.group_id:

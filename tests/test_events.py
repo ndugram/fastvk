@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
+from pydantic import ValidationError
 
 from fastvk.types.events import GroupJoinEvent, GroupLeaveEvent, WallPostEvent
 
@@ -25,7 +28,7 @@ class TestGroupJoinEvent:
 
     def test_is_frozen(self) -> None:
         evt = GroupJoinEvent.from_dict({"user_id": 1, "join_type": "join"})
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             evt.user_id = 999  # type: ignore[misc]
 
 
@@ -45,12 +48,12 @@ class TestGroupLeaveEvent:
 
     def test_is_frozen(self) -> None:
         evt = GroupLeaveEvent.from_dict({"user_id": 1, "self": 0})
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             evt.user_id = 999  # type: ignore[misc]
 
 
 class TestWallPostEvent:
-    _base: dict = {
+    _base: ClassVar[dict] = {
         "id": 42,
         "owner_id": -100500,
         "from_id": 123456,
@@ -98,5 +101,5 @@ class TestWallPostEvent:
 
     def test_is_frozen(self) -> None:
         evt = WallPostEvent.from_dict(self._base)
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             evt.id = 999  # type: ignore[misc]

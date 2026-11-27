@@ -31,6 +31,12 @@ class ThrottlingMiddleware(BaseMiddleware):
             if now - self._last.get(user_id, 0.0) < self._rate:
                 return None
             self._last[user_id] = now
+            try:
+                return await handler(event, data)
+            except BaseException:
+                if self._last.get(user_id) == now:
+                    self._last.pop(user_id, None)
+                raise
         return await handler(event, data)
 
     @staticmethod

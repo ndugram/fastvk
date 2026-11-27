@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock
 
-
 from fastvk.types.callback import CallbackQuery
 from fastvk.types.group import Group
 from fastvk.types.message import Message

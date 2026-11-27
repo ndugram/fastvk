@@ -4,7 +4,7 @@ from .context import FSMContext
 from .state import State, StatesGroup
 from .storage import BaseStorage, MemoryStorage
 
-__all__ = ["FSMContext", "State", "StatesGroup", "BaseStorage", "MemoryStorage", "RedisStorage", "SQLiteStorage"]
+__all__ = ["BaseStorage", "FSMContext", "MemoryStorage", "RedisStorage", "SQLiteStorage", "State", "StatesGroup"]
 
 
 def __getattr__(name: str) -> object:
