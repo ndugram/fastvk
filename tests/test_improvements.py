@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 import aiohttp
 import pytest
 
-from fastvk.api.client import Bot, _RETRYABLE_CODES
+from fastvk.api.client import _RETRYABLE_CODES, Bot
 from fastvk.filters.builtin import Command, ContentType, HasAttachment, Regexp
 from fastvk.fsm.storage import MemoryStorage
 from fastvk.keyboard import Button, Carousel
@@ -133,7 +133,7 @@ class TestRetryAndCaptcha:
             async def __aenter__(self) -> Any:
                 return self
 
-            async def __aexit__(self, *a: Any) -> None:
+            async def __aexit__(self, *a: object) -> None:
                 return None
 
             async def json(self, content_type: Any = None) -> dict:
@@ -319,7 +319,7 @@ class TestClientExtras:
             async def __aenter__(self) -> Any:
                 return self
 
-            async def __aexit__(self, *a: Any) -> None:
+            async def __aexit__(self, *a: object) -> None:
                 return None
 
             def raise_for_status(self) -> None:

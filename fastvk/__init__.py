@@ -1,13 +1,11 @@
 from __future__ import annotations
 
+from . import dashboard, enums, filters, fsm, methods, types
+from .api.client import Bot
 from .app import FastVK
 from .background import BackgroundTasks
-from .router import Router
-from .api.client import Bot
-from .keyboard import Button, Carousel, Keyboard
-from .types.callback import CallbackQuery
-from .types.group import Group
-from .filters.magic import F
+from .callback_data import CallbackData
+from .enums import ChatAction, Color, ParseMode
 from .filters.builtin import (
     Command,
     CommandHelp,
@@ -16,46 +14,43 @@ from .filters.builtin import (
     HasAttachment,
     Regexp,
 )
-from .enums import ChatAction, Color, ParseMode
-from .upload import Uploader
-from .callback_data import CallbackData
-from .scheduler import Scheduler
-from . import enums
-from . import filters
-from . import fsm
-from . import methods
-from . import types
-from . import dashboard
+from .filters.magic import F
+from .keyboard import Button, Carousel, Keyboard
 from .logging import setup_logging
+from .router import Router
+from .scheduler import Scheduler
+from .types.callback import CallbackQuery
+from .types.group import Group
+from .upload import Uploader
 
 __all__ = [
-    "FastVK",
-    "Router",
-    "Bot",
     "BackgroundTasks",
+    "Bot",
     "Button",
-    "Carousel",
-    "Keyboard",
+    "CallbackData",
     "CallbackQuery",
-    "Group",
-    "F",
-    "Command",
-    "CommandStart",
-    "CommandHelp",
-    "ContentType",
-    "HasAttachment",
-    "Regexp",
+    "Carousel",
     "ChatAction",
     "Color",
+    "Command",
+    "CommandHelp",
+    "CommandStart",
+    "ContentType",
+    "F",
+    "FastVK",
+    "Group",
+    "HasAttachment",
+    "Keyboard",
     "ParseMode",
-    "Uploader",
-    "CallbackData",
+    "Regexp",
+    "Router",
     "Scheduler",
+    "Uploader",
+    "dashboard",
     "enums",
     "filters",
     "fsm",
     "methods",
-    "types",
-    "dashboard",
     "setup_logging",
+    "types",
 ]
