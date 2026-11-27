@@ -37,7 +37,7 @@ async def cmd_quiz(message: Message, state: FSMContext) -> None:
 
 
 async def _check(message: Message, state: FSMContext, idx: int) -> None:
-    question, answer = QUESTIONS[idx]
+    _question, answer = QUESTIONS[idx]
     data = await state.get_data()
     score = data.get("score", 0)
     correct = message.text.strip().lower() == answer

@@ -41,7 +41,7 @@ SCHEMA_URL = (
 
 def _download_schema(dest: Path) -> None:
     print(f"downloading VK API schema {SCHEMA_TAG} …")
-    with urllib.request.urlopen(SCHEMA_URL, timeout=60) as resp:  # noqa: S310
+    with urllib.request.urlopen(SCHEMA_URL, timeout=60) as resp:
         raw = resp.read()
     dest.mkdir(parents=True, exist_ok=True)
     with tarfile.open(fileobj=io.BytesIO(raw), mode="r:gz") as tar:
@@ -51,9 +51,9 @@ def _download_schema(dest: Path) -> None:
                 continue
             member.name = rel[1]
             try:
-                tar.extract(member, dest, filter="data")  # noqa: S202
+                tar.extract(member, dest, filter="data")
             except TypeError:  # Python < 3.12 has no `filter=`
-                tar.extract(member, dest)  # noqa: S202
+                tar.extract(member, dest)
 
 # field names that would shadow a pydantic BaseModel attribute
 _SHADOW = {
@@ -264,6 +264,8 @@ def generate(schema_dir: Path, out_dir: Path) -> None:
         uses_field = any(r[3] for r in rendered)
 
         chunks = [_HEADER]
+        if ns != ns.lower():
+            chunks.append("# ruff: noqa: N999\n")
         if uses_field:
             chunks.append("from pydantic import Field\n\n")
         chunks.append("from ..base import VKMethod\n\n\n")
@@ -277,7 +279,7 @@ def generate(schema_dir: Path, out_dir: Path) -> None:
         total += len(methods)
 
     init = [_HEADER]
-    for ns in ns_names:
+    for ns in sorted(ns_names, key=str.casefold):
         init.append(f"from . import {ns} as {ns}\n")
     init.append("\n")
     init.append("GENERATED_REGISTRY: dict[str, type] = {}\n")
@@ -289,9 +291,10 @@ def generate(schema_dir: Path, out_dir: Path) -> None:
         init.append(f'    "{ns}",\n')
     init.append(")\n\n")
     init.append("__all__ = [\n")
+    init.append('    "GENERATED_NAMESPACES",\n    "GENERATED_REGISTRY",\n')
     for ns in ns_names:
         init.append(f'    "{ns}",\n')
-    init.append('    "GENERATED_REGISTRY",\n    "GENERATED_NAMESPACES",\n]\n')
+    init.append("]\n")
     (out_dir / "__init__.py").write_text("".join(init), "utf-8")
 
     print(f"generated {total} methods across {len(ns_names)} namespaces -> {out_dir}")

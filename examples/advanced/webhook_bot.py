@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import os
 
-from fastvk import FastVK, Command
+from fastvk import Command, FastVK
 from fastvk.types import Message
 
 bot = FastVK(

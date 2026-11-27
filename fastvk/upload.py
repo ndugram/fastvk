@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, BinaryIO, Literal
 
 import aiohttp
 
+from ._files import StreamingFilePayload, open_file, remaining_size, run_io
 from .methods.docs import DocsGetMessagesUploadServer, DocsSave
 from .methods.photos import PhotosGetMessagesUploadServer, PhotosSaveMessagesPhoto
 
@@ -228,38 +229,36 @@ class Uploader:
         :param field_name: Form field name (photo/file)
         :return: JSON response from upload server
         """
-        session = await self.bot._get_session()
-
-        # Determine if file is a path or file-like object
         if isinstance(file, (str, Path)):
             file_path = Path(file)
-            if not file_path.exists():
-                raise FileNotFoundError(f"File not found: {file_path}")
+            async with open_file(lambda: file_path.open("rb")) as stream:
+                return await self._post_file(
+                    upload_url, stream, filename or file_path.name, field_name,
+                )
 
-            actual_filename = filename or file_path.name
-            mime_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+        if filename is None:
+            raise ValueError("filename is required when uploading from file-like object")
+        return await self._post_file(upload_url, file, filename, field_name)
 
-            with open(file_path, "rb") as f:
-                file_data = f.read()
-        else:
-            # File-like object
-            if filename is None:
-                raise ValueError("filename is required when uploading from file-like object")
-
-            actual_filename = filename
-            mime_type = mimetypes.guess_type(actual_filename)[0] or "application/octet-stream"
-            file_data = file.read()
-
-        # Prepare multipart form data
+    async def _post_file(
+        self,
+        upload_url: str,
+        stream: BinaryIO,
+        filename: str,
+        field_name: str,
+    ) -> dict:
+        session = await self.bot._get_session()
+        mime_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
         form_data = aiohttp.FormData()
         form_data.add_field(
             field_name,
-            file_data,
-            filename=actual_filename,
+            StreamingFilePayload(
+                stream, await run_io(lambda: remaining_size(stream)), content_type=mime_type,
+            ),
+            filename=filename,
             content_type=mime_type,
         )
 
-        # Upload to VK server
         async with session.post(upload_url, data=form_data) as resp:
             if resp.status != 200:
                 raise RuntimeError(f"Upload failed with status {resp.status}: {await resp.text()}")
