@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-from fastvk import FastVK, CallbackData
+from fastvk import CallbackData, FastVK
 from fastvk.filters import CallbackDataFilter, Command
 from fastvk.keyboard import Button, Keyboard
 from fastvk.types import CallbackQuery, Message
