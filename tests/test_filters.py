@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-
 from typing import ClassVar
 
 from fastvk.callback_data import CallbackData
-from fastvk.filters.builtin import CallbackDataFilter, Command, Text, StateFilter
-from fastvk.types.callback import CallbackQuery
+from fastvk.filters.builtin import CallbackDataFilter, Command, StateFilter, Text
 from fastvk.filters.magic import F
 from fastvk.fsm.context import FSMContext
 from fastvk.fsm.state import State, StatesGroup
 from fastvk.fsm.storage import MemoryStorage
+from fastvk.types.callback import CallbackQuery
 from fastvk.types.command import CommandArgs
 
 
