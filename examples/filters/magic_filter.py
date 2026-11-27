@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 
-from fastvk import F, FastVK, Button, CallbackQuery, Keyboard
+from fastvk import Button, CallbackQuery, F, FastVK, Keyboard
 from fastvk.filters import Command, StateFilter
 from fastvk.fsm import FSMContext, State, StatesGroup
 from fastvk.types import Message

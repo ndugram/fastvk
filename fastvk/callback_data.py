@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import TypeVar
 
 from pydantic import BaseModel
-
-C = TypeVar("C", bound="CallbackData")
+from typing_extensions import Self
 
 
 class CallbackData(BaseModel):
@@ -38,7 +36,7 @@ class CallbackData(BaseModel):
         return f"{self.__class__.prefix}:{json.dumps(data, ensure_ascii=False, separators=(',', ':'))}" # type: ignore
 
     @classmethod
-    def unpack(cls: type[C], value: str | dict) -> C:
+    def unpack(cls, value: str | dict) -> Self:
         if isinstance(value, dict):
             return cls(**value)
         if isinstance(value, str):

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import os
 
-from fastvk import FastVK, Button, Keyboard
+from fastvk import Button, FastVK, Keyboard
 from fastvk.filters import Command
 from fastvk.types import Message
 

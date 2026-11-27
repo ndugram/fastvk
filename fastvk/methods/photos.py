@@ -23,7 +23,8 @@ class PhotosSaveMessagesPhoto(VKMethod[list]):
     Save a photo uploaded via :class:`PhotosGetMessagesUploadServer`.
 
     Returns list of saved photo objects. Use ``photo[0]`` to build
-    the attachment string: ``f"photo{photo['owner_id']}_{photo['id']}"``.
+    the attachment string: ``f"photo{photo['owner_id']}_{photo['id']}"``,
+    appending ``_{access_key}`` when the saved object includes a non-empty key.
     """
 
     __returning__ = list

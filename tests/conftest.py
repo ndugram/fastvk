@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-
 from fastvk.api.client import Bot
 from fastvk.fsm.storage import MemoryStorage
 from fastvk.types.callback import CallbackQuery
