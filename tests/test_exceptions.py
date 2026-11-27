@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from fastvk.exceptions import (
     FastVKError,
     FilterError,

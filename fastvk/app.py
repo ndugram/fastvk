@@ -8,28 +8,26 @@ import signal
 import time
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
-from aiohttp import web
-
-
 from typing import TYPE_CHECKING, Any
+
+from aiohttp import web
 
 from .api.client import Bot
 from .types.group import Group
 
 if TYPE_CHECKING:
     from .api.client import _APIMethod
+from .dashboard.config import BaseDashboard
+from .dashboard.server import Dashboard
 from .fsm.storage import BaseStorage, MemoryStorage
+from .logging import setup_logging
 from .middleware.base import BaseMiddleware, MiddlewareManager
 from .middleware.throttling import ThrottlingMiddleware
 from .polling.longpoll import LongPoller
 from .polling.userlongpoll import UserLongPoller
 from .router import Router
 from .types.update import Update
-from .logging import setup_logging
-from .dashboard.server import Dashboard
-from .dashboard.config import BaseDashboard
 from .webhook import WebhookHandler
-
 
 logger = logging.getLogger("fastvk")
 
@@ -96,7 +94,7 @@ class FastVK(Router):
         self.middleware_manager = MiddlewareManager(_mw)
 
     @property
-    def uploader(self) -> Any:  # noqa: ANN401
+    def uploader(self) -> Any:
         """Lazy :class:`~fastvk.upload.Uploader` bound to this bot."""
         from .upload import Uploader
 
@@ -137,9 +135,9 @@ class FastVK(Router):
         return self.bot.docs
 
     def __getattr__(self, name: str) -> Any:
-        # Delegate any other VK API namespace (board, market, video, likes,
-        # friends, stories, utils, storage, …) to the underlying Bot.
-        if name.startswith("_") or name == "bot":
+        from .methods._generated import GENERATED_NAMESPACES
+
+        if name not in GENERATED_NAMESPACES:
             raise AttributeError(name)
         return getattr(self.bot, name)
 

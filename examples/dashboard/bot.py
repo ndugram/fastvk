@@ -6,10 +6,9 @@ Pass the instance to FastVK as `dashboard=`.
 
 Dashboard available at http://127.0.0.1:8000 when running.
 """
+from examples.dashboard.settings import dashboard
 from fastvk import FastVK, Router
 from fastvk.types import Message
-
-from examples.dashboard.settings import dashboard
 
 BOT_TOKEN = ""
 GROUP_ID = 1234567

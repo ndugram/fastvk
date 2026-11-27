@@ -1,6 +1,6 @@
 from fastvk import FastVK
-from fastvk.methods import GroupsGetMembers, MessagesGetHistory, WallGet
 from fastvk.filters import Command
+from fastvk.methods import GroupsGetMembers, MessagesGetHistory, WallGet
 from fastvk.types import Message
 
 bot = FastVK(token="vk1.a.YOUR_TOKEN")

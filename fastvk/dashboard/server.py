@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 
 from aiohttp import web
 
-from .html import get_dashboard_html
 from ..__meta__ import __version__, _api_version_
+from .html import get_dashboard_html
 
 if TYPE_CHECKING:
     from ..app import FastVK
