@@ -35,7 +35,7 @@ class WebhookHandler:
     async def handle(self, request: web.Request) -> web.Response:
         try:
             data: dict = await request.json()
-        except Exception:
+        except ValueError:
             return web.Response(text="bad request", status=400)
 
         if self._secret and data.get("secret") != self._secret:
@@ -53,7 +53,7 @@ class WebhookHandler:
                 event_id=data.get("event_id", ""),
             )
             self._app._spawn(update)
-        except Exception as exc:
-            logger.error("Webhook parse error: %s", exc)
+        except Exception:
+            logger.exception("Webhook parse error")
 
         return web.Response(text="ok")
