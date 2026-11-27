@@ -137,9 +137,9 @@ class FastVK(Router):
         return self.bot.docs
 
     def __getattr__(self, name: str) -> Any:
-        # Delegate any other VK API namespace (board, market, video, likes,
-        # friends, stories, utils, storage, …) to the underlying Bot.
-        if name.startswith("_") or name == "bot":
+        from .methods._generated import GENERATED_NAMESPACES
+
+        if name not in GENERATED_NAMESPACES:
             raise AttributeError(name)
         return getattr(self.bot, name)
 
