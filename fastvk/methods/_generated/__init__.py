@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from . import account as account
 from . import ads as ads
-from . import appWidgets as appWidgets
 from . import apps as apps
+from . import appWidgets as appWidgets
 from . import auth as auth
 from . import board as board
 from . import bugtracker as bugtracker
@@ -145,6 +145,8 @@ GENERATED_NAMESPACES = (
 )
 
 __all__ = [
+    "GENERATED_NAMESPACES",
+    "GENERATED_REGISTRY",
     "account",
     "ads",
     "appWidgets",
@@ -189,6 +191,4 @@ __all__ = [
     "video",
     "wall",
     "widgets",
-    "GENERATED_REGISTRY",
-    "GENERATED_NAMESPACES",
 ]

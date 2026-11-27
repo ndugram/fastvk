@@ -144,4 +144,4 @@ async def dispatch(
     return await router.feed_update(update, bot, storage or MemoryStorage(), data)
 
 
-__all__ = ["MockedBot", "message_update", "callback_update", "dispatch"]
+__all__ = ["MockedBot", "callback_update", "dispatch", "message_update"]
